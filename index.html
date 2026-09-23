@@ -1,0 +1,2577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>La Detective Panda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-dark: #1a1a2e;
+      --box-bg: #2d1b0e;
+      --box-border: #c4956a;
+      --box-border-light: #e8c9a0;
+      --box-shadow: #1a0f06;
+      --text-main: #fff8ef;
+      --text-name-nennis: #ffda6b;
+      --text-name-buho: #a8d8ea;
+      --text-name-system: #b8e6b8;
+      --text-name-default: #e8c9a0;
+      --accent-green: #6ec46e;
+      --accent-red: #e85d5d;
+      --accent-gold: #ffda6b;
+      --font-main: 'Fredoka', sans-serif;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg-dark);
+      font-family: var(--font-main);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .screen {
+      position: absolute; inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .screen.active { display: flex; }
+
+    /* ===== TITLE ===== */
+    #title-screen {
+      background: url('assets/scenes/menu_bg.png') center/cover no-repeat;
+      overflow: hidden;
+    }
+    #title-screen::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+    .title-content { text-align: center; z-index: 1; animation: fadeInUp 1s ease-out; }
+    .game-title {
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700; color: var(--accent-gold);
+      text-shadow: 0 2px 0 #b8860b, 0 4px 8px rgba(0,0,0,0.5);
+      line-height: 1.1;
+    }
+    .game-subtitle {
+      font-size: clamp(0.9rem, 2.5vw, 1.5rem);
+      font-weight: 500; color: var(--text-main);
+      margin-top: 0.5rem; opacity: 0.9;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .title-paw {
+      width: clamp(120px, 35vw, 180px);
+      margin: 1.2rem auto;
+      animation: bounce 2s ease-in-out infinite;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.6));
+      display: flex;
+      justify-content: center;
+    }
+    .title-paw img {
+      mix-blend-mode: screen;
+    }
+
+    .retro-btn {
+      font-family: var(--font-main);
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 600; color: var(--text-main);
+      background: linear-gradient(180deg, #5a8f3c 0%, #3d6b28 100%);
+      border: 3px solid #7ab85a;
+      border-bottom: 5px solid #2a4f1a;
+      border-radius: 12px;
+      padding: 0.8rem 2.5rem;
+      cursor: pointer;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      transition: transform 0.1s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .retro-btn:hover { background: linear-gradient(180deg, #6ba048 0%, #4a7a32 100%); }
+    .retro-btn:active { border-bottom-width: 3px; margin-top: 2px; transform: translateY(1px); }
+
+    /* ===== SCENE ===== */
+    #scene-screen { justify-content: flex-end; }
+    #scene-background {
+      position: absolute; inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.6s ease;
+    }
+    #scene-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+
+    /* ===== DIALOGUE ===== */
+    .dialogue-box {
+      position: relative;
+      width: 92%; max-width: 800px;
+      margin-bottom: 1.5rem;
+      z-index: 10; cursor: pointer;
+      animation: slideUp 0.3s ease-out;
+    }
+    .dialogue-frame {
+      background: var(--box-bg);
+      border: 3px solid var(--box-border);
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem 1rem;
+      position: relative;
+      box-shadow: 0 0 0 1px var(--box-shadow), inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 20px rgba(0,0,0,0.5);
+    }
+    .dialogue-frame::before {
+      content: '';
+      position: absolute; inset: 4px;
+      border: 1px solid rgba(196,149,106,0.2);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    .speaker-name {
+      position: absolute; top: -14px; left: 16px;
+      background: var(--box-bg);
+      border: 2px solid var(--box-border);
+      border-radius: 8px;
+      padding: 2px 14px;
+      font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+      font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-name-default);
+    }
+    .speaker-name.nennis { color: var(--text-name-nennis); border-color: var(--text-name-nennis); }
+    .speaker-name.buho { color: var(--text-name-buho); border-color: var(--text-name-buho); }
+    .speaker-name.sistema { color: var(--text-name-system); border-color: var(--text-name-system); }
+
+    .dialogue-text {
+      font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+      font-weight: 400; color: var(--text-main);
+      line-height: 1.6; min-height: 2.5em;
+    }
+    .dialogue-indicator {
+      position: absolute; bottom: 8px; right: 16px;
+      color: var(--box-border-light);
+      font-size: 0.8rem;
+      animation: blink 1s step-end infinite;
+      opacity: 0;
+    }
+    .dialogue-indicator.visible { opacity: 1; }
+
+    /* ===== NARRATOR ===== */
+    .narrator-box {
+      position: relative;
+      width: 80%; max-width: 700px;
+      margin-bottom: 1.5rem;
+      z-index: 10; cursor: pointer;
+      animation: slideUp 0.3s ease-out;
+    }
+    .narrator-frame {
+      background: rgba(0,0,0,0.75);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .narrator-text {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      font-weight: 400; font-style: italic;
+      color: rgba(255,248,239,0.85); line-height: 1.6;
+    }
+
+    /* ===== SCENE TITLE ===== */
+    .scene-title-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 20;
+      background: rgba(0,0,0,0.6);
+      animation: fadeIn 0.5s ease-out;
+      cursor: pointer;
+    }
+    .scene-title-content { text-align: center; animation: scaleIn 0.5s ease-out; }
+    .scene-title-text {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700; color: var(--accent-gold);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .scene-title-sub {
+      font-size: clamp(0.85rem, 2vw, 1.1rem);
+      font-weight: 400; color: var(--text-main);
+      margin-top: 0.5rem; opacity: 0.8;
+    }
+
+    /* ===== TRANSITION ===== */
+    .transition-overlay {
+      position: absolute; inset: 0;
+      background: #000; z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .transition-overlay.active { opacity: 1; pointer-events: all; }
+
+    /* ===== MINIGAME ===== */
+    #minigame-screen { background: var(--bg-dark); }
+    #minigame-container {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+
+    .mg-wrapper {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1rem;
+      font-family: var(--font-main);
+      color: var(--text-main);
+      position: relative; overflow: hidden;
+    }
+    .mg-wrapper * { box-sizing: border-box; }
+    .mg-title {
+      font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+      font-weight: 700; color: var(--accent-gold);
+      text-align: center; margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .mg-subtitle {
+      font-size: clamp(0.8rem, 2vw, 1rem);
+      color: rgba(255,248,239,0.7); text-align: center;
+      margin-bottom: 1.5rem; padding: 0 1rem;
+    }
+    .mg-btn {
+      font-family: var(--font-main);
+      font-size: clamp(0.9rem, 2.2vw, 1.1rem);
+      font-weight: 600; color: var(--text-main);
+      background: linear-gradient(180deg, #5a8f3c, #3d6b28);
+      border: 3px solid #7ab85a;
+      border-bottom: 4px solid #2a4f1a;
+      border-radius: 10px;
+      padding: 0.7rem 2rem; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      outline: none;
+    }
+    .mg-btn:active { border-bottom-width: 2px; transform: translateY(2px); }
+    .mg-btn.secondary {
+      background: linear-gradient(180deg, #6a6a7a, #4a4a5a);
+      border-color: #8a8a9a; border-bottom-color: #3a3a4a;
+    }
+    .mg-feedback {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 600; text-align: center;
+      margin: 1rem 0; min-height: 2em;
+    }
+    .mg-feedback.success { color: var(--accent-green); }
+    .mg-feedback.error { color: var(--accent-red); }
+    .mg-feedback.info { color: var(--text-name-buho); }
+    .mg-lives { font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 0.5rem; }
+
+    /* ===== BACK BUTTON ===== */
+    .btn-back {
+      position: absolute;
+      bottom: 1.5rem; left: 1rem;
+      z-index: 15;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(45, 27, 14, 0.85);
+      border: 2px solid var(--box-border);
+      color: var(--box-border-light);
+      font-size: 1.1rem;
+      font-family: var(--font-main);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .btn-back:active { transform: scale(0.9); }
+    @media (max-width: 600px) {
+      .btn-back { bottom: 1rem; left: 0.5rem; }
+    }
+
+    /* ===== MENU SCREENS ===== */
+    .menu-screen {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      align-items: center;
+      background: linear-gradient(135deg, #1a2a1a 0%, #2d4a2d 50%, #0f2f1a 100%);
+      overflow-y: auto; overflow-x: hidden;
+      padding: 1.5rem 1rem 2rem;
+      z-index: 5;
+      justify-content: center;
+    }
+    .menu-screen.active { display: flex; }
+    #scene-select-screen {
+      background: url('assets/scenes/scenes_bg.png') center/cover no-repeat;
+    }
+    #scene-select-screen::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+      pointer-events: none;
+    }
+    #scene-select-screen > * { position: relative; z-index: 1; }
+    #games-select-screen {
+      background: url('assets/scenes/games_bg.png') center/cover no-repeat;
+    }
+    #games-select-screen::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+      pointer-events: none;
+    }
+    #games-select-screen > * { position: relative; z-index: 1; }
+
+    .menu-header {
+      text-align: center; margin-bottom: 1.5rem; width: 100%;
+    }
+    .menu-title {
+      font-size: clamp(1.3rem, 3.5vw, 2rem);
+      font-weight: 700; color: var(--accent-gold);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .menu-subtitle {
+      font-size: clamp(0.8rem, 2vw, 1rem);
+      color: rgba(255,248,239,0.7); margin-top: 0.3rem;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      width: 100%; max-width: 500px;
+    }
+
+    .menu-card {
+      display: flex; align-items: center; gap: 0.8rem;
+      background: rgba(45,27,14,0.8);
+      border: 2px solid rgba(196,149,106,0.4);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .menu-card:active { transform: scale(0.97); }
+    .menu-card:hover { border-color: var(--accent-gold); }
+
+    .menu-card-num {
+      width: 36px; height: 36px; min-width: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5a8f3c, #3d6b28);
+      border: 2px solid #7ab85a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; color: #fff;
+    }
+    .menu-card-info { flex: 1; min-width: 0; }
+    .menu-card-title {
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      font-weight: 600; color: var(--text-main);
+    }
+    .menu-card-sub {
+      font-size: clamp(0.7rem, 1.6vw, 0.8rem);
+      color: rgba(255,248,239,0.5); margin-top: 0.1rem;
+    }
+
+    .menu-card-game .menu-card-num {
+      background: linear-gradient(135deg, #6a4fa0, #4a3080);
+      border-color: #9a7ad0;
+    }
+
+    .menu-back-btn {
+      margin-top: 1.5rem;
+      font-family: var(--font-main);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      font-weight: 600; color: var(--box-border-light);
+      background: rgba(45,27,14,0.6);
+      border: 2px solid rgba(196,149,106,0.3);
+      border-radius: 10px;
+      padding: 0.6rem 2rem;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .menu-back-btn:active { transform: scale(0.95); }
+
+    .btn-home {
+      position: absolute;
+      top: 12px; right: 12px;
+      z-index: 30;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: 2px solid rgba(196,149,106,0.5);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 0.2s, border-color 0.2s;
+      font-size: 1.3rem;
+      line-height: 1;
+      color: var(--text-main);
+    }
+    .btn-home:active { background: rgba(0,0,0,0.8); border-color: var(--accent-gold); }
+
+    .scene-mosaic {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      width: 100%; max-width: 560px;
+    }
+    .scene-mosaic .menu-card {
+      flex-direction: column;
+      text-align: center;
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    .scene-card-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .scene-card-thumb::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.6) 100%);
+    }
+    .scene-card-badge {
+      position: absolute; top: 4px; left: 4px; z-index: 1;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5a8f3c, #3d6b28);
+      border: 2px solid #7ab85a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 700; color: #fff;
+    }
+    .scene-card-body {
+      padding: 0.35rem 0.3rem 0.4rem;
+    }
+    .scene-mosaic .menu-card-title {
+      font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+      line-height: 1.2;
+    }
+    .scene-mosaic .menu-card-sub {
+      font-size: clamp(0.5rem, 1.1vw, 0.6rem);
+    }
+
+    .page-nav {
+      display: flex; align-items: center; gap: 1rem;
+      margin-top: 1rem;
+    }
+    .page-nav-btn {
+      font-family: var(--font-main);
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--text-main);
+      background: rgba(45,27,14,0.6);
+      border: 2px solid rgba(196,149,106,0.4);
+      border-radius: 10px;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .page-nav-btn:active { transform: scale(0.9); }
+    .page-nav-btn:disabled { opacity: 0.3; pointer-events: none; }
+    .page-nav-label {
+      font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+      color: var(--box-border-light);
+      font-weight: 600;
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    @media (max-width: 600px) {
+      .dialogue-frame { padding: 1rem 1rem 0.8rem; }
+      .dialogue-box, .narrator-box { width: 95%; margin-bottom: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="title-screen" class="screen active">
+      <div class="title-content">
+        <h1 class="game-title">La Detective Panda</h1>
+        <h2 class="game-subtitle">y el Misterio de los Pupitres Vacíos</h2>
+        <div class="title-paw"><img src="assets/scenes/huellas.webp" alt="huellas" style="width:100%;height:auto;"></div>
+        <button id="btn-start" class="retro-btn">Comenzar Investigación</button>
+        <div style="display:flex;gap:0.8rem;margin-top:1rem;justify-content:center;flex-wrap:wrap;">
+          <button id="btn-scenes" class="retro-btn" style="font-size:clamp(0.8rem,2vw,1rem);padding:0.6rem 1.5rem;background:linear-gradient(180deg,#6a5a3c,#4a3a28);border-color:#9a8a6a;border-bottom-color:#3a2a1a;">Elegir Escena</button>
+          <button id="btn-games" class="retro-btn" style="font-size:clamp(0.8rem,2vw,1rem);padding:0.6rem 1.5rem;background:linear-gradient(180deg,#5a4a8c,#3a2a6c);border-color:#8a7abc;border-bottom-color:#2a1a4c;">Practicar Juegos</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="scene-select-screen" class="menu-screen">
+      <div class="menu-header">
+        <div class="menu-title">Elegir Escena</div>
+        <div class="menu-subtitle">Salta directamente a cualquier escena</div>
+      </div>
+      <div class="scene-mosaic" id="scene-select-grid"></div>
+      <div class="page-nav">
+        <button class="page-nav-btn" id="scene-page-prev">◀</button>
+        <span class="page-nav-label" id="scene-page-label"></span>
+        <button class="page-nav-btn" id="scene-page-next">▶</button>
+      </div>
+      <button class="menu-back-btn" id="scene-select-back">Volver al menú</button>
+    </div>
+
+    <div id="games-select-screen" class="menu-screen">
+      <div class="menu-header">
+        <div class="menu-title">Practicar Juegos</div>
+        <div class="menu-subtitle">Practica cualquier minijuego</div>
+      </div>
+      <div class="menu-grid" id="games-select-grid"></div>
+      <button class="menu-back-btn" id="games-select-back">Volver al menú</button>
+    </div>
+
+    <div id="scene-screen" class="screen">
+      <div id="scene-background"></div>
+      <div id="scene-overlay"></div>
+      <button id="btn-home" class="btn-home" aria-label="Volver al menú">🏠</button>
+      <button id="btn-back" class="btn-back hidden" aria-label="Diálogo anterior">◀</button>
+      <div id="dialogue-box" class="dialogue-box hidden">
+        <div class="dialogue-frame">
+          <div id="speaker-name" class="speaker-name"></div>
+          <div id="dialogue-text" class="dialogue-text"></div>
+          <div id="dialogue-indicator" class="dialogue-indicator">▼</div>
+        </div>
+      </div>
+      <div id="narrator-box" class="narrator-box hidden">
+        <div class="narrator-frame">
+          <div id="narrator-text" class="narrator-text"></div>
+          <div class="dialogue-indicator narrator-indicator">▼</div>
+        </div>
+      </div>
+      <div id="scene-title-overlay" class="scene-title-overlay hidden">
+        <div class="scene-title-content">
+          <div id="scene-title-text" class="scene-title-text"></div>
+          <div id="scene-title-sub" class="scene-title-sub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="minigame-screen" class="screen">
+      <div id="minigame-container"></div>
+    </div>
+
+    <div id="transition-overlay" class="transition-overlay"></div>
+  </div>
+
+<script>
+// ═══════════════════════════════════════════
+// SCENES DATA
+// ═══════════════════════════════════════════
+const SCENES = {
+  scene1: {
+    id: 'scene1',
+    title: 'Escena 1',
+    subtitle: 'El salón de clases',
+    background: 'assets/scenes/escena1_a.png',
+    dialogues: [
+      { type: 'narrator', text: 'Nennis era la detective oficial del recreo. Bueno… en realidad ella misma se había nombrado detective.' },
+      { type: 'narrator', text: 'Hasta ese día solo había resuelto un caso.' },
+      { speaker: 'NENNIS', text: 'CASO N.º 001: El misterio de la merienda desaparecida.' },
+      { speaker: 'NENNIS', text: 'La víctima: mi bocadillo de bambú.' },
+      { speaker: 'NENNIS', text: 'El lugar del crimen: mi mochila.' },
+      { speaker: 'NENNIS', text: 'Los sospechosos: todos.' },
+      { type: 'narrator', text: 'Después de tres horas de investigación, Nennis encontró una pista decisiva: unas migas de bambú en su propia gabardina.' },
+      { speaker: 'NENNIS', text: '…' },
+      { speaker: 'NENNIS', text: 'Creo que debo interrogarme.' },
+      { type: 'narrator', text: 'El caso quedó resuelto cuando Nennis recordó que se había comido la merienda durante el primer recreo.' },
+      { speaker: 'NENNIS', text: 'CASO N.º 001… resuelto.' },
+      { speaker: 'NENNIS', text: 'La culpable era extremadamente astuta.' },
+      { speaker: 'PROFESORA BÚHO', text: 'Nennis, eras tú.' },
+      { speaker: 'NENNIS', text: 'Exactamente. Extremadamente astuta.' },
+      { type: 'narrator', text: 'Y así, con un caso exitosamente resuelto en su historial, comenzó una nueva mañana en la Escuela del Bosque de Bambú.' },
+      { speaker: 'PROFESORA BÚHO', text: 'Conejitos.', bg: 'assets/scenes/escena1_b.png' },
+      { speaker: 'CONEJITOS', text: '¡Presentes!' },
+      { speaker: 'PROFESORA BÚHO', text: 'Ardillas.' },
+      { speaker: 'ARDILLAS', text: '¡Presentes!' },
+      { speaker: 'PROFESORA BÚHO', text: 'Panditas.' },
+      { speaker: 'NENNIS', text: '¡Presente!' },
+      { speaker: 'NENNIS', text: 'Uno… dos… tres…' },
+      { speaker: 'NENNIS', text: 'Profesora… creo que faltan pandas.' },
+      { speaker: 'PROFESORA BÚHO', text: 'No falta ninguno, Nennis.' },
+      { speaker: 'NENNIS', text: '¿Ninguno?' },
+      { speaker: 'NENNIS', text: 'Entonces esto es mucho más grave de lo que pensaba.' },
+      { speaker: 'NENNIS', text: 'Tenemos un misterio.' },
+    ],
+    next: 'scene2',
+  },
+  scene2: {
+    id: 'scene2',
+    title: 'Escena 2',
+    subtitle: 'La oficina improvisada de Nennis',
+    background: 'assets/scenes/escena2.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Caso número dos: ¿por qué hay tan pocos pandas en la escuela?' },
+      { speaker: 'NENNIS', text: 'Primera teoría: el autobús se olvida de nosotros.' },
+      { speaker: 'NENNIS', text: 'Segunda teoría: demasiado bambú. Bastante probable.' },
+      { speaker: 'NENNIS', text: 'Tercera teoría: existe una escuela secreta de pandas.' },
+      { speaker: 'NENNIS', text: 'Sí… esa suena especialmente misteriosa.' },
+      { speaker: 'PROFESORA BÚHO', text: 'Quizás quieras empezar por algo un poco más comprobable.' },
+      { speaker: 'NENNIS', text: '¿Una pista?' },
+      { speaker: 'PROFESORA BÚHO', text: 'Una dirección. Ve al pasillo de los retratos, ahí encontrarás algo útil.' },
+      { speaker: 'NENNIS', text: '¡Aún mejor que una pista! ¡Es una misión!' },
+      { speaker: 'NENNIS', text: 'Gabardina puesta. Lupa lista. Vamos allá.' },
+    ],
+    next: 'scene3',
+  },
+  scene3: {
+    id: 'scene3',
+    title: 'Escena 3',
+    subtitle: 'El pasillo de los retratos',
+    background: 'assets/scenes/escena3_a.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'A ver… la Profesora Búho dijo que aquí encontraría algo.', bg: 'assets/scenes/escena3_a.png' },
+      { speaker: 'NENNIS', text: 'Muchos conejos… muchos zorros…' },
+      { speaker: 'NENNIS', text: 'Panda dormido. Sospechoso.', bg: 'assets/scenes/escena3_b.png' },
+      { speaker: 'NENNIS', text: 'Panda comiendo. Muy sospechoso.', bg: 'assets/scenes/escena3_c.png' },
+      { speaker: 'NENNIS', text: '¡Oh! Una detective panda.', bg: 'assets/scenes/escena3_d.png' },
+      { speaker: 'NENNIS', text: 'Lupa grande, postura seria… claramente sabía lo que hacía.' },
+      { speaker: 'NENNIS', text: '¿Y esa flecha? Apunta hacia… ¿el Archivo de los Ciclos?' },
+      { speaker: 'NENNIS', text: 'Si quiero descubrir por qué hay tan pocos pandas, necesito datos.', bg: 'assets/scenes/escena3_e.png' },
+      { speaker: 'NENNIS', text: '¡Al archivo!' },
+    ],
+    next: 'scene4_intro',
+  },
+  scene4_intro: {
+    id: 'scene4_intro',
+    title: 'Escena 4',
+    subtitle: 'El Archivo de los Ciclos',
+    background: 'assets/scenes/escena4.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Vaya… el archivo está protegido con un sistema viejo.' },
+      { speaker: 'SISTEMA', text: 'Acceso bloqueado. Para desbloquear los registros, reconstruye el calendario de los ciclos naturales.' },
+      { speaker: 'NENNIS', text: '¿Un calendario? Tengo que ordenar los meses para poder acceder a los datos.' },
+      { speaker: 'NENNIS', text: 'Perfecto. Los calendarios jamás han derrotado a una detective.' },
+      { speaker: 'NENNIS', text: '…Creo.' },
+    ],
+    next: 'minigame_calendar',
+  },
+  scene4_end: {
+    id: 'scene4_end', title: null,
+    background: 'assets/scenes/escena4.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡Ajá! Los registros muestran algo interesante.' },
+      { speaker: 'NENNIS', text: 'Hay una especie con una sola temporada marcada en todo el año.' },
+      { speaker: 'NENNIS', text: '¡Los pandas gigantes!!! Al parecer solo tienen una temporada especial una vez al año…' },
+      { speaker: 'NENNIS', text: '¡Espera, espera, espera! ¿Qué es esto? Hay un número escrito aquí abajo…' },
+      { speaker: 'NENNIS', text: '¡Es un 0! Qué raro… Lo voy a anotar en mi libreta. Una detective nunca ignora una pista sospechosa.' },
+      { speaker: 'NENNIS', text: '¿Una temporada oficial de panditas? Esto podría explicar muchas cosas.' },
+      { speaker: 'NENNIS', text: 'Pero necesito más información. ¿Cuánto dura exactamente esa temporada?' },
+      { speaker: 'NENNIS', text: 'Y esta llave que encontré entre los registros… definitivamente abre algo.' },
+    ],
+    next: 'scene5',
+  },
+  scene5: {
+    id: 'scene5',
+    title: 'Escena 5',
+    subtitle: 'El Jardín de los Relojes',
+    background: 'assets/scenes/escena5.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Una llave con forma de reloj necesita una cerradura con forma de reloj.' },
+      { speaker: 'NENNIS', text: 'Eso reduce mis sospechosos a…' },
+      { speaker: 'NENNIS', text: 'Muchísimos relojes.' },
+      { speaker: 'NENNIS', text: 'No.' },
+      { speaker: 'NENNIS', text: 'Tampoco.' },
+      { speaker: 'NENNIS', text: 'Definitivamente el bambú no era una cerradura.' },
+      { speaker: 'NENNIS', text: '¡Aquí estás!' },
+    ],
+    next: 'scene6_intro',
+  },
+  scene6_intro: {
+    id: 'scene6_intro',
+    title: 'Escena 6',
+    subtitle: 'El Invernadero del Tiempo',
+    background: 'assets/scenes/escena6.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Este lugar está lleno de relojes… y la llave encaja aquí.' },
+      { speaker: 'SISTEMA', text: 'Mecanismo activado. Para revelar el dato oculto, detén el reloj en el momento exacto.' },
+      { speaker: 'NENNIS', text: 'Claro… no basta con saber CUÁNDO es la temporada. Necesito saber cuánto DURA.' },
+      { speaker: 'NENNIS', text: 'Una detective siempre tiene buen timing.' },
+      { speaker: 'NENNIS', text: 'O eso espero.' },
+    ],
+    next: 'minigame_precision',
+  },
+  scene6_end: {
+    id: 'scene6_end', title: null,
+    background: 'assets/scenes/escena6.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡Justo ahí!' },
+      { speaker: 'NENNIS', text: 'Dentro de esa temporada, las pandas gigantes solo tienen unos pocos días fértiles…' },
+      { speaker: 'NENNIS', text: '¡Otro número! ¡Qué curioso! Este dice 1.' },
+      { speaker: 'NENNIS', text: 'Primero un 0 y ahora un 1… Algo me dice que no es coincidencia. ¡A la libreta!' },
+      { speaker: 'NENNIS', text: 'Entonces no solamente ocurre una vez al año.' },
+      { speaker: 'NENNIS', text: 'Además hay que coincidir con unos poquitos días.' },
+      { speaker: 'NENNIS', text: '¿Y esta fotografía?' },
+    ],
+    next: 'scene7',
+  },
+  scene7: {
+    id: 'scene7',
+    title: 'Escena 7',
+    subtitle: 'El comedor de la escuela',
+    background: 'assets/scenes/escena7_a.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Archivo de las Familias… debe estar cerca.', bg: 'assets/scenes/escena7_a.png' },
+      { speaker: 'NENNIS', text: 'Concentración, Nennis. Nada puede distraerte.', bg: 'assets/scenes/escena7_b.png' },
+      { speaker: 'NENNIS', text: '…' },
+      { speaker: 'NENNIS', text: '¿Eso es bambú fresco?', bg: 'assets/scenes/escena7_c.png' },
+      { speaker: 'NENNIS', text: 'Una detective necesita energía.' },
+      { speaker: 'NENNIS', text: 'Espera. Esa fotografía… yo ya la vi.' },
+      { speaker: 'NENNIS', text: '¡Coincide!', bg: 'assets/scenes/escena7_d.png' },
+      { speaker: 'NENNIS', text: '¿Y este botón estaba aquí todo el tiempo?' },
+    ],
+    next: 'scene8_intro',
+  },
+  scene8_intro: {
+    id: 'scene8_intro',
+    title: 'Escena 8',
+    subtitle: 'El Archivo de las Familias',
+    background: 'assets/scenes/escena8_a.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'El Archivo de las Familias… aquí están los registros de todas las especies del bosque.' },
+      { speaker: 'NENNIS', text: 'Ya sé que los pandas tienen una temporada al año y que dura poquitos días.' },
+      { speaker: 'NENNIS', text: 'Pero me falta una pieza: ¿cuántas crías tienen comparado con otras especies?' },
+      { speaker: 'NENNIS', text: 'Si conecto cada especie con su tamaño de camada, tendré la respuesta.' },
+      { speaker: 'NENNIS', text: 'Familias, especies y cantidades… esto sí parece trabajo de detective.' },
+    ],
+    next: 'minigame_logic',
+  },
+  scene8_end: {
+    id: 'scene8_end', title: null,
+    background: 'assets/scenes/escena8_a.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'La familia panda está asociada con uno de los grupos más pequeños.' },
+      { speaker: 'NENNIS', text: 'Creo que ya lo tengo.' },
+      { speaker: 'NENNIS', text: 'Los pandas gigantes suelen tener pocas crías en cada gestación…' },
+      { speaker: 'NENNIS', text: '¡No puede ser! ¡Hay otro número aquí! ¡Un 8!' },
+      { speaker: 'NENNIS', text: '0… 1… 8… ¿Será un código? ¡Mi olfato de detective me dice que esto es IMPORTANTE!' },
+      { speaker: 'NENNIS', text: 'Una temporada. Poquitos días. Poquitos bebés panda.' },
+      { speaker: 'NENNIS', text: '¡Creo que resolví el caso!', bg: 'assets/scenes/escena8_b.png' },
+    ],
+    next: 'scene9',
+  },
+  scene9: {
+    id: 'scene9',
+    title: 'Escena 9',
+    subtitle: 'La carrera de regreso',
+    background: 'assets/scenes/escena9_a.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡Permiso! ¡Detective trabajando!', bg: 'assets/scenes/escena9_a.png' },
+      { speaker: 'NENNIS', text: 'Calendario: una temporada.', bg: 'assets/scenes/escena9_b.png' },
+      { speaker: 'NENNIS', text: 'Reloj: pocos días.' },
+      { speaker: 'NENNIS', text: 'Familias: pocas crías.' },
+      { speaker: 'NENNIS', text: 'Eso significa que…', bg: 'assets/scenes/escena9_c.png' },
+      { speaker: 'NENNIS', text: '¡Woooaaah!' },
+      { speaker: 'NENNIS', text: '…' },
+      { speaker: 'NENNIS', text: 'Entrada completamente planeada.' },
+    ],
+    next: 'scene10',
+  },
+  scene10: {
+    id: 'scene10',
+    title: 'Escena 10',
+    subtitle: 'La resolución frente al tablero',
+    background: 'assets/scenes/escena10_b.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡He descubierto la verdad!' },
+      { speaker: 'NENNIS', text: '¿El autobús pierde a los pandas? No.' },
+      { speaker: 'NENNIS', text: '¿Nos quedamos comiendo bambú? A veces. Pero no explica el misterio.' },
+      { speaker: 'NENNIS', text: '¿Existe una escuela secreta de pandas?', bg: 'assets/scenes/escena10_a.png' },
+      { speaker: 'NENNIS', text: 'No encontré pruebas suficientes. El caso sigue abierto.', bg: 'assets/scenes/escena10_b.png' },
+      { speaker: 'PROFESORA BÚHO', text: 'Nennis…' },
+      { speaker: 'NENNIS', text: 'Continuemos.' },
+      { speaker: 'NENNIS', text: 'Primera pista: los pandas tienen una temporada reproductiva una vez al año.' },
+      { speaker: 'NENNIS', text: 'Segunda pista: dentro de esa temporada, la ventana fértil dura muy pocos días.' },
+      { speaker: 'NENNIS', text: 'Tercera pista: además, suelen tener pocas crías.' },
+      { speaker: 'NENNIS', text: 'Por eso nacen menos panditas que en especies que tienen más oportunidades y camadas mayores.' },
+      { speaker: 'PANDITA 2', text: '¿Entonces no faltamos?' },
+      { speaker: 'NENNIS', text: 'Exactamente.' },
+      { speaker: 'NENNIS', text: '¡Somos edición limitada!' },
+      { speaker: 'PROFESORA BÚHO', text: 'Esa es… una forma de decirlo.' },
+    ],
+    next: 'scene11_intro',
+  },
+  scene11_intro: {
+    id: 'scene11_intro',
+    title: 'Escena 11',
+    subtitle: 'El código secreto',
+    background: 'assets/scenes/escena11.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: 'Un momento.' },
+      { speaker: 'NENNIS', text: 'Mis pistas tienen números.' },
+      { speaker: 'PROFESORA BÚHO', text: '¿Y qué hace una detective cuando encuentra algo que no comprende?' },
+      { speaker: 'NENNIS', text: 'Lo mira fijamente hasta que se vuelve comprensible.' },
+      { speaker: 'PROFESORA BÚHO', text: 'También puedes usar tu libreta.' },
+      { speaker: 'NENNIS', text: 'Cierto.' },
+    ],
+    next: 'minigame_code',
+  },
+  scene11_end: {
+    id: 'scene11_end', title: null,
+    background: 'assets/scenes/escena11.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡Cero, uno, ocho!' },
+      { speaker: 'NENNIS', text: 'Y… ¡mi bambú!' },
+      { speaker: 'PROFESORA BÚHO', text: 'Tú lo guardaste ahí esta mañana.' },
+      { speaker: 'NENNIS', text: '…' },
+      { speaker: 'NENNIS', text: 'Profesora.' },
+      { speaker: 'PROFESORA BÚHO', text: '¿Sí?' },
+      { speaker: 'NENNIS', text: 'Creo que tenemos un nuevo caso.' },
+    ],
+    next: 'scene12',
+  },
+  scene12: {
+    id: 'scene12', title: null,
+    background: 'assets/scenes/escena12.png',
+    dialogues: [
+      { speaker: 'NENNIS', text: '¡Oye, oye! ¡Antes de que te vayas!' },
+      { speaker: 'NENNIS', text: '¡Muchas gracias por ayudarme con este caso! No lo habría resuelto sin ti.' },
+      { speaker: 'NENNIS', text: 'Pronto recibirás tu insignia oficial como Detective Pandita. ¡Te la mereces!' },
+      { speaker: 'NENNIS', text: 'Pero no te relajes demasiado…' },
+      { speaker: 'NENNIS', text: '¡Aún te queda resolver el misterio de la llave que está en tu maleta!' },
+      { speaker: 'NENNIS', text: '¡Buena suerte! Y recuerda: si necesitas ayuda, ya sabes dónde encontrarme.' },
+      { speaker: 'NENNIS', text: '¡Coyeye coyeye! ¡AIOS!!!' },
+    ],
+    next: 'ending',
+  },
+};
+
+// ═══════════════════════════════════════════
+// DIALOGUE ENGINE
+// ═══════════════════════════════════════════
+class DialogueEngine {
+  constructor() {
+    this.dialogueBox = document.getElementById('dialogue-box');
+    this.speakerName = document.getElementById('speaker-name');
+    this.dialogueText = document.getElementById('dialogue-text');
+    this.dialogueIndicator = document.getElementById('dialogue-indicator');
+    this.narratorBox = document.getElementById('narrator-box');
+    this.narratorText = document.getElementById('narrator-text');
+    this.narratorIndicator = document.querySelector('.narrator-indicator');
+    this.queue = [];
+    this.currentIndex = 0;
+    this.isTyping = false;
+    this.typeTimer = null;
+    this.charIndex = 0;
+    this.currentFullText = '';
+    this.onComplete = null;
+    this.speed = 35;
+  }
+
+  loadDialogues(dialogues, onComplete) {
+    this.queue = dialogues;
+    this.currentIndex = 0;
+    this.onComplete = onComplete;
+    this.hideAll();
+    this.updateBackButton();
+    this.showCurrent();
+  }
+
+  hideAll() {
+    this.dialogueBox.classList.add('hidden');
+    this.narratorBox.classList.add('hidden');
+    this.dialogueIndicator.classList.remove('visible');
+    if (this.narratorIndicator) this.narratorIndicator.classList.remove('visible');
+  }
+
+  showCurrent() {
+    if (this.currentIndex >= this.queue.length) {
+      this.hideAll();
+      if (this.onComplete) this.onComplete();
+      return;
+    }
+
+    const entry = this.queue[this.currentIndex];
+
+    if (entry.bg) {
+      document.getElementById('scene-background').style.backgroundImage = "url('" + entry.bg + "')";
+    }
+
+    if (entry.type === 'narrator') {
+      this.dialogueBox.classList.add('hidden');
+      this.narratorBox.classList.remove('hidden');
+      this.typeText(this.narratorText, entry.text, this.narratorIndicator);
+    } else {
+      this.narratorBox.classList.add('hidden');
+      this.dialogueBox.classList.remove('hidden');
+
+      const name = entry.speaker;
+      this.speakerName.textContent = name;
+      this.speakerName.className = 'speaker-name';
+      if (name.startsWith('NENNIS')) this.speakerName.classList.add('nennis');
+      else if (name === 'PROFESORA BÚHO') this.speakerName.classList.add('buho');
+      else if (name === 'SISTEMA') this.speakerName.classList.add('sistema');
+
+      this.typeText(this.dialogueText, entry.text, this.dialogueIndicator);
+    }
+  }
+
+  typeText(element, text, indicator) {
+    this.isTyping = true;
+    this.charIndex = 0;
+    this.currentFullText = text;
+    this.currentIndicator = indicator;
+    if (indicator) indicator.classList.remove('visible');
+    element.textContent = '';
+
+    clearInterval(this.typeTimer);
+    this.typeTimer = setInterval(() => {
+      if (this.charIndex < this.currentFullText.length) {
+        element.textContent += this.currentFullText[this.charIndex];
+        this.charIndex++;
+      } else {
+        clearInterval(this.typeTimer);
+        this.isTyping = false;
+        if (indicator) indicator.classList.add('visible');
+      }
+    }, this.speed);
+  }
+
+  advance() {
+    if (this.isTyping) {
+      clearInterval(this.typeTimer);
+      this.isTyping = false;
+      const entry = this.queue[this.currentIndex];
+      const target = entry.type === 'narrator' ? this.narratorText : this.dialogueText;
+      target.textContent = this.currentFullText;
+      if (this.currentIndicator) this.currentIndicator.classList.add('visible');
+      return;
+    }
+    this.currentIndex++;
+    this.updateBackButton();
+    this.showCurrent();
+  }
+
+  goBack() {
+    if (this.currentIndex <= 0) return;
+    clearInterval(this.typeTimer);
+    this.isTyping = false;
+    this.currentIndex--;
+    this.updateBackButton();
+    this.showCurrent();
+  }
+
+  updateBackButton() {
+    var btn = document.getElementById('btn-back');
+    if (!btn) return;
+    if (this.currentIndex > 0 && this.currentIndex < this.queue.length) {
+      btn.classList.remove('hidden');
+    } else {
+      btn.classList.add('hidden');
+    }
+  }
+
+  clear() {
+    clearInterval(this.typeTimer);
+    this.hideAll();
+    this.queue = [];
+    this.currentIndex = 0;
+  }
+}
+
+// ═══════════════════════════════════════════
+// MINIGAMES
+// ═══════════════════════════════════════════
+
+function calendarMinigame(container, onComplete, onDefeat) {
+  var ALL_MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var SEASON_MAP = {
+    'Enero':'Invierno','Febrero':'Invierno','Marzo':'Primavera','Abril':'Primavera','Mayo':'Primavera',
+    'Junio':'Verano','Julio':'Verano','Agosto':'Verano','Septiembre':'Otoño','Octubre':'Otoño',
+    'Noviembre':'Otoño','Diciembre':'Invierno'
+  };
+  var SEASON_COLORS = { 'Invierno':'#a8d8ea','Primavera':'#6ec46e','Verano':'#ffda6b','Otoño':'#e8a050' };
+
+  var PHASES = [
+    { name: 'Fase 1', desc: 'Diciembre → Enero', instruction: 'Toca los meses en orden INVERSO:\nDesde Diciembre hasta Enero.\n¡Cuidado con los meses mal escritos!\nTienes 30 segundos.', order: ALL_MONTHS.slice().reverse(), time: 30, spawnMs: 1000, baseSpeed: 0.3, doubles: true, fakes: true },
+    { name: 'Fase 2', desc: 'Enero → Diciembre', instruction: 'Ahora en orden normal:\nDesde Enero hasta Diciembre.\n¡Cuidado con los meses mal escritos!\n¡Más rápido! Tienes 25 segundos.', order: ALL_MONTHS.slice(), time: 25, spawnMs: 600, baseSpeed: 0.8, doubles: true, fakes: true },
+    null
+  ];
+  function buildPhase3() {
+    var startIdx = Math.random() < 0.5 ? 0 : 1;
+    var order = [];
+    for (var i = startIdx; i < 12; i += 2) order.push(ALL_MONTHS[i]);
+    var desc = order[0] + ' → ' + order[order.length - 1] + ' (de 2 en 2)';
+    return { name: 'Fase 3', desc: desc, instruction: 'Meses de 2 en 2:\n' + order.join(', ') + '.\n¡Cuidado con los falsos!\n¡Velocidad máxima! Tienes 15 segundos.', order: order, time: 15, spawnMs: 650, baseSpeed: 0.55, doubles: true, fakes: true, fakeRatio: 3 };
+  }
+
+  var lives = 3;
+  var currentPhase = 0;
+  var phaseOrder = [];
+  var caught = [];
+  var gameActive = false;
+  var fallingCards = [];
+  var animFrame = null;
+  var spawnTimer = null;
+  var countdownTimer = null;
+  var timeLeft = 0;
+
+  function buildUI() {
+    container.innerHTML = '<div class="mg-wrapper" style="background:linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),url(\'assets/scenes/reto1_bg.png\') center/cover no-repeat;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:0.3rem;">' +
+        '<button class="menu-back-btn" id="cal-quit" style="margin:0;padding:0.4rem 1rem;font-size:clamp(0.7rem,1.6vw,0.85rem);">Salir</button>' +
+        '<div class="mg-title" style="margin:0;">Reconstruye el Calendario</div>' +
+        '<div style="width:60px;"></div>' +
+      '</div>' +
+      '<div id="cal-phase" style="font-size:clamp(0.9rem,2.2vw,1.1rem);font-weight:600;color:#a8d8ea;margin-bottom:0.2rem;text-align:center;"></div>' +
+      '<div id="cal-desc" style="font-size:clamp(0.75rem,1.8vw,0.9rem);color:rgba(255,248,239,0.6);margin-bottom:0.5rem;text-align:center;"></div>' +
+      '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">' +
+        '<div class="mg-lives" id="cal-lives"></div>' +
+        '<div id="cal-timer" style="font-size:clamp(1rem,2.5vw,1.3rem);font-weight:700;color:#ffda6b;min-width:3em;text-align:center;"></div>' +
+      '</div>' +
+      '<div id="cal-progress" style="font-size:clamp(0.8rem,1.8vw,0.95rem);color:#e8c9a0;margin-bottom:0.5rem;text-align:center;min-height:1.5em;"></div>' +
+      '<div id="cal-arena" style="position:relative;width:min(100%,500px);height:42vh;border:2px solid rgba(196,149,106,0.3);border-radius:12px;overflow:hidden;background:rgba(0,0,0,0.3);touch-action:none;"></div>' +
+      '<div class="mg-feedback" id="cal-feedback"></div>' +
+      '<button class="mg-btn" id="cal-start">Empezar</button></div>';
+
+    container.querySelector('#cal-quit').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      clearArena();
+      if (onDefeat) onDefeat();
+    });
+  }
+
+  buildUI();
+  var arena = container.querySelector('#cal-arena');
+  var livesEl = container.querySelector('#cal-lives');
+  var feedbackEl = container.querySelector('#cal-feedback');
+  var progressEl = container.querySelector('#cal-progress');
+  var timerEl = container.querySelector('#cal-timer');
+  var phaseEl = container.querySelector('#cal-phase');
+  var descEl = container.querySelector('#cal-desc');
+  var startBtn = container.querySelector('#cal-start');
+
+  arena.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    if (!gameActive || fallingCards.length === 0) return;
+    var rect = arena.getBoundingClientRect();
+    var tapX = e.clientX - rect.left;
+    var tapY = e.clientY - rect.top;
+
+    var closest = null;
+    var closestDist = Infinity;
+    fallingCards.forEach(function(fc) {
+      var el = fc.el;
+      var cx = el.offsetLeft + el.offsetWidth / 2;
+      var cy = fc.y + el.offsetHeight / 2;
+      var dx = tapX - cx;
+      var dy = tapY - cy;
+      var dist = dx * dx + dy * dy;
+      if (tapX >= el.offsetLeft && tapX <= el.offsetLeft + el.offsetWidth &&
+          tapY >= fc.y && tapY <= fc.y + el.offsetHeight && dist < closestDist) {
+        closest = fc;
+        closestDist = dist;
+      }
+    });
+
+    if (!closest) return;
+    var card = closest.el;
+    var realMonth = card.dataset.month;
+    var displayText = card.dataset.display;
+
+    function removeCard(scale) {
+      card.style.transition = 'transform 0.2s, opacity 0.2s';
+      card.style.transform = 'scale(' + scale + ')';
+      card.style.opacity = '0';
+      setTimeout(function() { card.remove(); }, 200);
+      fallingCards = fallingCards.filter(function(c) { return c.el !== card; });
+    }
+
+    if (realMonth === '__fake__') {
+      removeCard(0.5);
+      phaseFail('¡"' + displayText + '" está mal escrito!');
+      return;
+    }
+    var expected = phaseOrder[caught.length];
+    if (realMonth === expected) {
+      caught.push(realMonth);
+      removeCard(1.3);
+      feedbackEl.textContent = '¡' + realMonth + '! ✓';
+      feedbackEl.className = 'mg-feedback success';
+      updateProgress();
+      if (caught.length === phaseOrder.length) phaseComplete();
+    } else {
+      phaseFail('No es ' + displayText + '… necesitas ' + expected);
+    }
+  });
+
+  function updateLives() { livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives); }
+  function updateProgress() {
+    var next = phaseOrder[caught.length];
+    progressEl.textContent = next ? 'Siguiente: ' + next : '';
+  }
+  function updateTimer() {
+    timerEl.textContent = timeLeft + 's';
+    timerEl.style.color = timeLeft <= 5 ? '#e85d5d' : '#ffda6b';
+  }
+
+  function clearArena() {
+    fallingCards.forEach(function(c) { c.el.remove(); });
+    fallingCards = [];
+    clearInterval(spawnTimer);
+    clearInterval(countdownTimer);
+    cancelAnimationFrame(animFrame);
+    gameActive = false;
+  }
+
+  function showInstructions(phase, callback) {
+    clearArena();
+    arena.innerHTML = '';
+    feedbackEl.textContent = '';
+    progressEl.textContent = '';
+    timerEl.textContent = '';
+    phaseEl.textContent = phase.name + ' de 3';
+    descEl.textContent = phase.desc;
+    startBtn.style.display = 'none';
+
+    arena.innerHTML = '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;z-index:10;">' +
+      '<div style="font-size:clamp(1.2rem,3vw,1.6rem);font-weight:700;color:#ffda6b;margin-bottom:1rem;">' + phase.name + '</div>' +
+      '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;white-space:pre-line;margin-bottom:1.5rem;">' + phase.instruction + '</div>' +
+      '<button class="mg-btn" id="cal-go">¡Listo!</button></div>';
+
+    arena.querySelector('#cal-go').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      arena.innerHTML = '';
+      callback();
+    });
+  }
+
+  var FAKE_MONTHS = {
+    'Enero':'Enerro','Febrero':'Febreo','Marzo':'Marso','Abril':'Abrill',
+    'Mayo':'Mallö','Junio':'Junnio','Julio':'Juleo','Agosto':'Agusto',
+    'Septiembre':'Setiembre','Octubre':'Octube','Noviembre':'Nobiembre','Diciembre':'Diciemble'
+  };
+  var spawnCount = 0;
+
+  function createOneCard(month, isFake) {
+    var displayText = isFake ? FAKE_MONTHS[month] : month;
+    var realMonth = isFake ? '__fake__' : month;
+
+    var card = document.createElement('div');
+    var arenaW = arena.offsetWidth;
+    var cardW = Math.min(110, arenaW * 0.28);
+    var x = Math.random() * (arenaW - cardW);
+
+    var cardH = cardW * 1.1;
+    card.style.cssText = 'position:absolute;left:' + x + 'px;top:-' + cardH + 'px;width:' + cardW + 'px;height:' + cardH + 'px;' +
+      'background:url(\'assets/scenes/bambu_card.webp\') center/contain no-repeat;' +
+      'display:flex;align-items:center;justify-content:center;text-align:center;' +
+      'font-family:Fredoka,sans-serif;font-weight:700;color:#fff8ef;' +
+      'font-size:clamp(0.7rem,2vw,0.95rem);' +
+      'text-shadow:0 1px 3px rgba(0,0,0,0.8),0 0 6px rgba(0,0,0,0.5);' +
+      'cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;z-index:5;';
+    card.textContent = displayText;
+    card.dataset.month = realMonth;
+    card.dataset.display = displayText;
+    card.style.pointerEvents = 'none';
+
+    arena.appendChild(card);
+    var phase = getPhase();
+    var speed = phase.baseSpeed + Math.random() * 0.25 + (caught.length * 0.015);
+    fallingCards.push({ el: card, y: -cardH, speed: speed });
+  }
+
+  function spawnCard() {
+    if (!gameActive) return;
+    var pool = phaseOrder.filter(function(m) { return caught.indexOf(m) === -1; });
+    if (pool.length === 0) return;
+
+    var phase = getPhase();
+    var count = phase.doubles ? 2 : 1;
+
+    for (var c = 0; c < count; c++) {
+      var needed = phaseOrder[caught.length];
+      var hasNeeded = fallingCards.some(function(fc) { return fc.el.dataset.month === needed; });
+      var month;
+      if (!hasNeeded && c === 0 && Math.random() < 0.7) {
+        month = needed;
+      } else {
+        month = pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      spawnCount++;
+      var ratio = phase.fakeRatio || 5;
+      if (phase.fakes && spawnCount % ratio === 0) {
+        var fakeBase = pool[Math.floor(Math.random() * pool.length)];
+        createOneCard(fakeBase, true);
+      } else {
+        createOneCard(month, false);
+      }
+    }
+  }
+
+  function gameLoop() {
+    if (!gameActive) return;
+    var arenaH = arena.offsetHeight;
+    fallingCards = fallingCards.filter(function(c) {
+      c.y += c.speed;
+      c.el.style.top = c.y + 'px';
+      if (c.y > arenaH + 10) { c.el.remove(); return false; }
+      return true;
+    });
+    animFrame = requestAnimationFrame(gameLoop);
+  }
+
+  function getPhase() {
+    if (currentPhase === 2 && !PHASES[2]) PHASES[2] = buildPhase3();
+    return PHASES[currentPhase];
+  }
+
+  function runPhase() {
+    var phase = getPhase();
+    phaseOrder = phase.order.slice();
+    caught = [];
+    spawnCount = 0;
+    timeLeft = phase.time;
+
+    phaseEl.textContent = phase.name + ' de 3';
+    descEl.textContent = phase.desc;
+    updateLives();
+    updateProgress();
+    updateTimer();
+    feedbackEl.textContent = '';
+    startBtn.style.display = 'none';
+    gameActive = true;
+
+    spawnTimer = setInterval(spawnCard, phase.spawnMs);
+    spawnCard();
+    gameLoop();
+
+    countdownTimer = setInterval(function() {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) {
+        phaseFail('¡Se acabó el tiempo!');
+      }
+    }, 1000);
+  }
+
+  function startPhase() {
+    var phase = getPhase();
+    showInstructions(phase, runPhase);
+  }
+
+  function showLifeLostScreen(msg, callback) {
+    clearArena();
+    arena.innerHTML = '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;z-index:10;">' +
+      '<div style="font-size:clamp(2rem,6vw,3rem);margin-bottom:0.5rem;">🐼</div>' +
+      '<div style="font-size:clamp(1.1rem,3vw,1.4rem);font-weight:700;color:#e85d5d;margin-bottom:0.5rem;">¡Qué ta pasando, qué ta pasando!</div>' +
+      '<div style="font-size:clamp(0.9rem,2.2vw,1.1rem);color:#ffda6b;margin-bottom:0.3rem;">Perdí una vida</div>' +
+      '<div style="font-size:clamp(0.8rem,1.8vw,0.95rem);color:rgba(255,248,239,0.6);margin-bottom:1.5rem;">' + msg + '</div>' +
+      '<button class="mg-btn secondary" id="cal-retry">Reintentar Fase</button></div>';
+
+    arena.querySelector('#cal-retry').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      arena.innerHTML = '';
+      callback();
+    });
+  }
+
+  function phaseFail(msg) {
+    clearArena();
+    lives--;
+    updateLives();
+
+    if (lives <= 0) {
+      showDefeatScreen();
+      return;
+    }
+
+    showLifeLostScreen(msg, function() { startPhase(); });
+  }
+
+  function phaseComplete() {
+    clearArena();
+    currentPhase++;
+    if (currentPhase >= 3) {
+      feedbackEl.textContent = '¡Calendario completo! Las 3 fases superadas';
+      feedbackEl.className = 'mg-feedback success';
+      phaseEl.textContent = '¡Completado!';
+      descEl.textContent = '';
+      timerEl.textContent = '';
+      startBtn.textContent = 'Continuar';
+      startBtn.className = 'mg-btn';
+      startBtn.style.display = '';
+      startBtn.onclick = function() { onComplete(); };
+    } else {
+      if (lives === 1) {
+        lives = 2;
+        updateLives();
+        feedbackEl.textContent = '¡Fase superada! Ohh encontré una vida en Diciembre, el mes con más felicidad de todos';
+      } else {
+        feedbackEl.textContent = '¡Fase superada!';
+      }
+      feedbackEl.className = 'mg-feedback success';
+      startBtn.textContent = 'Siguiente Fase';
+      startBtn.className = 'mg-btn';
+      startBtn.style.display = '';
+      startBtn.onclick = function() { startPhase(); };
+    }
+  }
+
+  function showDefeatScreen() {
+    clearArena();
+    container.innerHTML = '<div class="mg-wrapper" style="text-align:center;">' +
+      '<div style="font-size:clamp(3rem,10vw,5rem);margin-bottom:1rem;">🐼</div>' +
+      '<div class="mg-title" style="color:#e85d5d;">¡Nooooo!</div>' +
+      '<div style="font-size:clamp(1.1rem,3vw,1.5rem);font-weight:700;color:#ffda6b;margin:0.5rem 0 1rem;">¡¡IMPOSIBOLLL!!</div>' +
+      '<div style="font-size:clamp(0.9rem,2.2vw,1.1rem);color:#e8c9a0;max-width:400px;line-height:1.6;margin-bottom:2rem;">' +
+        'Tendré que volver al punto de partida…</div>' +
+      '<button class="mg-btn secondary" id="cal-defeat-btn">Volver</button></div>';
+    container.querySelector('#cal-defeat-btn').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      if (onDefeat) onDefeat();
+    });
+  }
+
+  function startGame() {
+    lives = 3;
+    currentPhase = 0;
+    PHASES[2] = null;
+    updateLives();
+    startPhase();
+  }
+
+  updateLives();
+  timerEl.textContent = '';
+  startBtn.onclick = startGame;
+}
+
+function precisionMinigame(container, onComplete, onDefeat) {
+  var lives = 3;
+  var currentPhase = 0;
+  var animFrame = null;
+  var gameActive = false;
+
+  function showDefeatScreen() {
+    container.innerHTML = '<div class="mg-wrapper" style="text-align:center;">' +
+      '<div style="font-size:clamp(3rem,10vw,5rem);margin-bottom:1rem;">🐼</div>' +
+      '<div class="mg-title" style="color:#e85d5d;">¡Nooooo!</div>' +
+      '<div style="font-size:clamp(1.1rem,3vw,1.5rem);font-weight:700;color:#ffda6b;margin:0.5rem 0 1rem;">¡¡IMPOSIBOLLL!!</div>' +
+      '<div style="font-size:clamp(0.9rem,2.2vw,1.1rem);color:#e8c9a0;max-width:400px;line-height:1.6;margin-bottom:2rem;">' +
+        'Tendré que volver al punto de partida…</div>' +
+      '<button class="mg-btn secondary" id="prec-defeat-btn">Volver</button></div>';
+    container.querySelector('#prec-defeat-btn').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      if (onDefeat) onDefeat();
+    });
+  }
+
+  function showLifeLost(msg, callback) {
+    var overlay = document.createElement('div');
+    overlay.id = 'prec-life-lost';
+    overlay.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:50;padding:1.5rem;text-align:center;';
+    overlay.innerHTML =
+      '<div style="font-size:clamp(2rem,6vw,3rem);margin-bottom:0.5rem;">🐼</div>' +
+      '<div style="font-size:clamp(1.1rem,3vw,1.4rem);font-weight:700;color:#e85d5d;margin-bottom:0.5rem;">¡Qué ta pasando, qué ta pasando!</div>' +
+      '<div style="font-size:clamp(0.9rem,2.2vw,1.1rem);color:#ffda6b;margin-bottom:0.3rem;">Perdí una vida</div>' +
+      '<div style="font-size:clamp(0.8rem,1.8vw,0.95rem);color:rgba(255,248,239,0.6);margin-bottom:1.5rem;">' + msg + '</div>' +
+      '<button class="mg-btn secondary">Reintentar</button>';
+    overlay.querySelector('button').addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      overlay.remove();
+      callback();
+    });
+    document.body.appendChild(overlay);
+  }
+
+  // ===== FASE 2: ATRAPA LOS DÍAS =====
+  function phase1() {
+    var ROUNDS = [
+      { speed: 1.2, zoneSize: 50, label: 'Ronda 1 — Ventana amplia' },
+      { speed: 1.8, zoneSize: 32, label: 'Ronda 2 — Ventana corta' },
+      { speed: 2.6, zoneSize: 18, label: 'Ronda 3 — Ventana mínima' },
+    ];
+    var round = 0;
+    var angle = 0;
+    var caught = 0;
+    var needed = 3;
+    var zoneStart = 0;
+    var zoneEnd = 0;
+
+    function buildClockUI() {
+      container.innerHTML =
+        '<div class="mg-wrapper">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:0.3rem;">' +
+            '<button class="menu-back-btn" id="prec-quit" style="margin:0;padding:0.4rem 1rem;font-size:clamp(0.7rem,1.6vw,0.85rem);">Salir</button>' +
+            '<div class="mg-title" style="margin:0;text-shadow:0 2px 8px rgba(0,0,0,0.9);">Atrapa los Días</div>' +
+            '<div style="width:60px;"></div>' +
+          '</div>' +
+          '<div class="mg-subtitle" style="text-shadow:0 1px 6px rgba(0,0,0,0.9);">Fase 2 de 2</div>' +
+          '<div class="mg-lives" id="prec-lives" style="text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>' +
+          '<div id="prec-round" style="font-size:clamp(0.85rem,2vw,1rem);color:#e8c9a0;margin-bottom:0.3rem;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,0.9);"></div>' +
+          '<div id="prec-caught" style="font-size:clamp(0.75rem,1.8vw,0.9rem);color:#ffda6b;margin-bottom:0.5rem;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>' +
+          '<div style="position:relative;width:min(280px,70vw);height:min(280px,70vw);" id="prec-clock">' +
+            '<img src="assets/scenes/reloj_reparado.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;border-radius:50%;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));">' +
+            '<canvas id="prec-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>' +
+          '</div>' +
+          '<div class="mg-feedback" id="prec-feedback" style="margin-top:0.8rem;text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>' +
+        '</div>';
+
+      container.querySelector('#prec-quit').addEventListener('pointerdown', function(e) {
+        e.preventDefault(); gameActive = false; cancelAnimationFrame(animFrame);
+        if (onDefeat) onDefeat();
+      });
+    }
+
+    function showInstructions(cb) {
+      container.innerHTML =
+        '<div class="mg-wrapper" style="text-align:center;">' +
+          '<div style="background:rgba(10,10,30,0.7);border-radius:16px;padding:1.5rem 1.2rem;max-width:400px;">' +
+            '<div class="mg-title" style="text-shadow:0 2px 8px rgba(0,0,0,0.9);">Atrapa los Días</div>' +
+            '<div class="mg-subtitle" style="text-shadow:0 1px 6px rgba(0,0,0,0.9);">Fase 2 de 2</div>' +
+            '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;margin:1rem 0 1.5rem;text-shadow:0 1px 4px rgba(0,0,0,0.8);">' +
+              'Los días giran alrededor del reloj.<br>' +
+              'Toca el reloj cuando la aguja esté<br>dentro de la <span style="color:#6ec46e;font-weight:700;">zona verde</span>.<br>' +
+              'Atrapa 3 días por ronda.<br>' +
+              '¡La ventana se hace más pequeña!' +
+            '</div>' +
+            '<div class="mg-lives" id="prec-lives-i"></div>' +
+            '<button class="mg-btn" id="prec-go">¡Listo!</button>' +
+          '</div>' +
+        '</div>';
+      container.querySelector('#prec-lives-i').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+      container.querySelector('#prec-go').addEventListener('pointerdown', function(e) {
+        e.preventDefault(); cb();
+      });
+    }
+
+    function startRound() {
+      var r = ROUNDS[round];
+      caught = 0;
+      zoneStart = 200 + Math.random() * 60;
+      zoneEnd = zoneStart + r.zoneSize;
+      angle = 0;
+
+      buildClockUI();
+      var livesEl = container.querySelector('#prec-lives');
+      var roundEl = container.querySelector('#prec-round');
+      var caughtEl = container.querySelector('#prec-caught');
+      var feedbackEl = container.querySelector('#prec-feedback');
+      var canvas = container.querySelector('#prec-canvas');
+      var clockDiv = container.querySelector('#prec-clock');
+      var size = clockDiv.offsetWidth;
+      canvas.width = size * 2; canvas.height = size * 2;
+      var ctx = canvas.getContext('2d');
+
+      livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+      roundEl.textContent = r.label;
+      caughtEl.textContent = 'Días atrapados: ' + caught + ' / ' + needed;
+
+      gameActive = true;
+
+      function draw() {
+        if (!gameActive) return;
+        var cx = canvas.width / 2, cy = canvas.height / 2, rad = cx * 0.62;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Green zone arc
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, (zoneStart - 90) * Math.PI / 180, (zoneEnd - 90) * Math.PI / 180);
+        ctx.strokeStyle = 'rgba(80,220,80,0.7)';
+        ctx.lineWidth = rad * 0.18;
+        ctx.stroke();
+
+        // Needle
+        var a = (angle - 90) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * rad * 0.9, cy + Math.sin(a) * rad * 0.9);
+        ctx.strokeStyle = '#e8302f';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Center dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffda6b';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#c4956a';
+        ctx.fill();
+
+        angle += r.speed;
+        if (angle >= 360) angle -= 360;
+
+        animFrame = requestAnimationFrame(draw);
+      }
+
+      clockDiv.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        if (!gameActive) return;
+        var normAngle = angle % 360;
+        var normStart = zoneStart % 360;
+        var normEnd = zoneEnd % 360;
+        var inZone = false;
+        if (normEnd > normStart) {
+          inZone = normAngle >= normStart && normAngle <= normEnd;
+        } else {
+          inZone = normAngle >= normStart || normAngle <= normEnd;
+        }
+
+        if (inZone) {
+          caught++;
+          caughtEl.textContent = 'Días atrapados: ' + caught + ' / ' + needed;
+          feedbackEl.textContent = '¡Día atrapado!';
+          feedbackEl.className = 'mg-feedback success';
+          if (caught >= needed) {
+            gameActive = false;
+            cancelAnimationFrame(animFrame);
+            round++;
+            if (round >= ROUNDS.length) {
+              feedbackEl.textContent = '¡Reto completado!';
+              setTimeout(function() { onComplete(); }, 1200);
+            } else {
+              feedbackEl.textContent = '¡Ronda superada!';
+              setTimeout(function() { startRound(); }, 1000);
+            }
+          }
+        } else {
+          gameActive = false;
+          cancelAnimationFrame(animFrame);
+          lives--;
+          if (lives <= 0) {
+            showDefeatScreen();
+          } else {
+            showLifeLost('La aguja no estaba en la zona verde', function() {
+              startRound();
+            });
+          }
+        }
+      });
+
+      draw();
+    }
+
+    showInstructions(startRound);
+  }
+
+  // ===== FASE 1: RELOJERO (ENGRANAJES) =====
+  function startPhase2() {
+    // --- VARIANTES ALEATORIAS POR RONDA ---
+    var SIZE_VARIANTS = [
+      { sizes:[16,24,34,44], facts:['Una temporada al año','Solo unos pocos días','La ventana es muy corta','El timing lo es todo'] },
+      { sizes:[20,28,36,48], facts:['El reloj no espera','Cada segundo cuenta','La precisión importa','El mecanismo es frágil'] },
+      { sizes:[14,22,32,42], facts:['La paciencia es clave','Nada se puede forzar','Todo a su tiempo','La naturaleza decide'] }
+    ];
+    var MATCH_VARIANTS_R2 = [
+      {
+        gearData:[
+          {symbol:'🌸',name:'Primavera',fact:'Todo despierta en primavera'},
+          {symbol:'☀️',name:'Verano',fact:'El calor acelera los ciclos'},
+          {symbol:'🍂',name:'Otoño',fact:'La cosecha antes del frío'},
+          {symbol:'❄️',name:'Invierno',fact:'El descanso invernal'}
+        ],
+        slotClues:['Donde todo florece','El calor es máximo','Las hojas caen','Todo se congela']
+      },
+      {
+        gearData:[
+          {symbol:'🌅',name:'Amanecer',fact:'Un nuevo día comienza'},
+          {symbol:'☀️',name:'Mediodía',fact:'La máxima energía'},
+          {symbol:'🌇',name:'Atardecer',fact:'El día se despide'},
+          {symbol:'🌙',name:'Noche',fact:'El mundo descansa'}
+        ],
+        slotClues:['El sol aparece','Sombras más cortas','Colores en el cielo','Las estrellas salen']
+      },
+      {
+        gearData:[
+          {symbol:'💧',name:'Agua',fact:'El origen de la vida'},
+          {symbol:'🔥',name:'Fuego',fact:'La energía que transforma'},
+          {symbol:'🌍',name:'Tierra',fact:'Donde todo se sostiene'},
+          {symbol:'💨',name:'Aire',fact:'Lo que no se ve pero se siente'}
+        ],
+        slotClues:['Fluye y se adapta','Arde y calienta','Firme y sólido','Invisible pero vital']
+      }
+    ];
+    var MATCH_VARIANTS_R3 = [
+      {
+        gearData:[
+          {symbol:'🌱',name:'Semilla',fact:'Todo comienza pequeño'},
+          {symbol:'🌿',name:'Brote',fact:'Crece con paciencia'},
+          {symbol:'🌳',name:'Árbol',fact:'La madurez llega'},
+          {symbol:'🍎',name:'Fruto',fact:'La recompensa del ciclo'},
+          {symbol:'🍂',name:'Caída',fact:'Todo ciclo se renueva'}
+        ],
+        slotClues:['Lo que se entierra primero','Asoma pero aún no es grande','Ya creció por completo','Lo que se puede cosechar','Regresa a la tierra']
+      },
+      {
+        gearData:[
+          {symbol:'🥒',name:'Huevo',fact:'El inicio silencioso'},
+          {symbol:'🐛',name:'Larva',fact:'La transformación empieza'},
+          {symbol:'🫘',name:'Crisálida',fact:'El cambio invisible'},
+          {symbol:'🦋',name:'Mariposa',fact:'La belleza del proceso'},
+          {symbol:'🌺',name:'Polinización',fact:'El ciclo continúa'}
+        ],
+        slotClues:['Antes de nacer se protege','Come y come sin parar','Se encierra para cambiar','Alas nuevas al fin','Lleva vida a las flores']
+      },
+      {
+        gearData:[
+          {symbol:'☁️',name:'Nube',fact:'Todo empieza arriba'},
+          {symbol:'🌧️',name:'Lluvia',fact:'El agua desciende'},
+          {symbol:'🏔️',name:'Río',fact:'Busca su camino'},
+          {symbol:'🌊',name:'Mar',fact:'Todo se reúne'},
+          {symbol:'🌤️',name:'Evaporación',fact:'Y vuelve a empezar'}
+        ],
+        slotClues:['Flota en lo alto','Cae desde el cielo','Baja por la montaña','Donde todo se junta','Sube de nuevo invisible']
+      }
+    ];
+
+    function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function buildRounds() {
+      var sv = pickRandom(SIZE_VARIANTS);
+      var mv2 = pickRandom(MATCH_VARIANTS_R2);
+      var mv3 = pickRandom(MATCH_VARIANTS_R3);
+      return [
+        { mode:'size', label:'Ronda 1 de 3 — Tamaños', desc:'Cada hueco tiene un tamaño distinto.<br>Arrastra el engranaje correcto a cada uno.', count:4, sizes:sv.sizes, facts:sv.facts },
+        { mode:'match', label:'Ronda 2 de 3 — Acertijos', desc:'Cada hueco tiene una pista.<br>Toca un engranaje para ver qué es.<br>Arrastra el correcto a su lugar.', count:4, gearData:mv2.gearData, slotClues:mv2.slotClues },
+        { mode:'match', label:'Ronda 3 de 3 — Ciclo', desc:'Las pistas son más difíciles.<br>Toca cada engranaje para identificarlo.<br>Piensa bien antes de colocar.', count:5, gearData:mv3.gearData, slotClues:mv3.slotClues }
+      ];
+    }
+
+    var ROUNDS = buildRounds();
+    var roundIdx = 0;
+
+    container.style.background = 'url(assets/scenes/reto2_bg.png) center/cover no-repeat';
+
+    function showInstructions2(cb) {
+      container.innerHTML =
+        '<div class="mg-wrapper" style="text-align:center;">' +
+          '<div style="background:rgba(10,10,30,0.7);border-radius:16px;padding:1.5rem 1.2rem;max-width:400px;">' +
+            '<div class="mg-title" style="text-shadow:0 2px 8px rgba(0,0,0,0.9);">Relojero</div>' +
+            '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;margin:1rem 0 1.5rem;text-shadow:0 1px 4px rgba(0,0,0,0.8);">' +
+              'El mecanismo del reloj está roto.<br>' +
+              'Repáralo colocando cada engranaje<br>en su posición correcta.' +
+            '</div>' +
+            '<div style="font-size:clamp(0.8rem,1.8vw,0.95rem);color:#e8c9a0;margin-bottom:0.5rem;text-shadow:0 1px 4px rgba(0,0,0,0.8);">Fase 1 de 2</div>' +
+            '<div class="mg-lives" id="prec-lives-i2"></div>' +
+            '<button class="mg-btn" id="prec-go2">¡Listo!</button>' +
+          '</div>' +
+        '</div>';
+      container.querySelector('#prec-lives-i2').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+      container.querySelector('#prec-go2').addEventListener('pointerdown', function(e) {
+        e.preventDefault(); cb();
+      });
+    }
+
+    function showRoundIntro(cb) {
+      var rd = ROUNDS[roundIdx];
+      container.innerHTML =
+        '<div class="mg-wrapper" style="text-align:center;">' +
+          '<div style="background:rgba(10,10,30,0.7);border-radius:16px;padding:1.5rem 1.2rem;max-width:400px;">' +
+            '<div class="mg-title" style="text-shadow:0 2px 8px rgba(0,0,0,0.9);">Relojero</div>' +
+            '<div class="mg-subtitle" style="text-shadow:0 1px 6px rgba(0,0,0,0.9);">' + rd.label + '</div>' +
+            '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;margin:1rem 0 1.5rem;text-shadow:0 1px 4px rgba(0,0,0,0.8);">' +
+              rd.desc +
+            '</div>' +
+            '<div class="mg-lives" id="rd-lives"></div>' +
+            '<button class="mg-btn" id="rd-go">¡Empezar!</button>' +
+          '</div>' +
+        '</div>';
+      container.querySelector('#rd-lives').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+      container.querySelector('#rd-go').addEventListener('pointerdown', function(e) {
+        e.preventDefault(); cb();
+      });
+    }
+
+    function startLevel() {
+      var rd = ROUNDS[roundIdx];
+      var gearCount = rd.count;
+      var circleSize = Math.min(280, window.innerWidth * 0.75, window.innerHeight * 0.35);
+      var cx = circleSize / 2;
+      var cy = circleSize / 2;
+      var slotRadius = circleSize * 0.32;
+
+      var slots = [];
+      var gears = [];
+      var placed = 0;
+
+      if (rd.mode === 'size') {
+        for (var i = 0; i < gearCount; i++) {
+          var ang = (-90 + i * (360 / gearCount)) * Math.PI / 180;
+          var sx = cx + Math.cos(ang) * slotRadius;
+          var sy = cy + Math.sin(ang) * slotRadius;
+          slots.push({ x: sx, y: sy, size: rd.sizes[i], fact: rd.facts[i], filled: false, id: i });
+        }
+      } else {
+        var gd = rd.gearData;
+        for (var i2 = 0; i2 < gearCount; i2++) {
+          var ang2 = (-90 + i2 * (360 / gearCount)) * Math.PI / 180;
+          var sx2 = cx + Math.cos(ang2) * slotRadius;
+          var sy2 = cy + Math.sin(ang2) * slotRadius;
+          slots.push({ x: sx2, y: sy2, clue: rd.slotClues[i2], fact: gd[i2].fact, filled: false, id: i2 });
+        }
+      }
+
+      // Shuffle gear order
+      var shuffled = [];
+      for (var j = 0; j < gearCount; j++) shuffled.push(j);
+      for (var k = shuffled.length - 1; k > 0; k--) {
+        var rr = Math.floor(Math.random() * (k + 1));
+        var tmp = shuffled[k]; shuffled[k] = shuffled[rr]; shuffled[rr] = tmp;
+      }
+
+      var gearTrayY = circleSize + 15;
+      for (var g = 0; g < gearCount; g++) {
+        var gx = 20 + g * ((circleSize - 40) / Math.max(1, gearCount - 1));
+        var gObj = { id: shuffled[g], x: gx, y: gearTrayY, placed: false };
+        if (rd.mode === 'size') {
+          gObj.size = slots[shuffled[g]].size;
+        } else {
+          gObj.symbol = rd.gearData[shuffled[g]].symbol;
+          gObj.gearName = rd.gearData[shuffled[g]].name;
+        }
+        gears.push(gObj);
+      }
+
+      var totalH = circleSize + 80;
+
+      container.innerHTML =
+        '<div class="mg-wrapper">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:0.3rem;">' +
+            '<button class="menu-back-btn" id="prec-quit2" style="margin:0;padding:0.4rem 1rem;font-size:clamp(0.7rem,1.6vw,0.85rem);">Salir</button>' +
+            '<div class="mg-title" style="margin:0;text-shadow:0 2px 8px rgba(0,0,0,0.9);">Relojero</div>' +
+            '<div style="width:60px;"></div>' +
+          '</div>' +
+          '<div class="mg-subtitle" style="text-shadow:0 1px 6px rgba(0,0,0,0.9);">Fase 1 de 2</div>' +
+          '<div class="mg-lives" id="gear-lives" style="text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>' +
+          '<div id="gear-level" style="font-size:clamp(0.85rem,2vw,1rem);color:#e8c9a0;margin-bottom:0.3rem;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,0.9);">' + rd.label + '</div>' +
+          '<div id="gear-info" style="min-height:1.8em;margin-bottom:0.3rem;font-family:Fredoka,sans-serif;font-size:clamp(0.9rem,2.2vw,1.1rem);color:#6ec46e;text-align:center;transition:opacity 0.2s;opacity:0;text-shadow:0 1px 6px rgba(0,0,0,0.9);font-weight:600;">&nbsp;</div>' +
+          '<div style="position:relative;width:' + circleSize + 'px;height:' + totalH + 'px;touch-action:none;" id="gear-area">' +
+            '<div style="position:absolute;left:0;top:0;width:' + circleSize + 'px;height:' + circleSize + 'px;border-radius:50%;' +
+              'background:url(assets/scenes/reloj.png) center/contain no-repeat;opacity:0.55;pointer-events:none;"></div>' +
+            '<div style="position:absolute;left:0;top:0;width:' + circleSize + 'px;height:' + circleSize + 'px;border-radius:50%;' +
+              'border:3px solid rgba(196,149,106,0.5);pointer-events:none;box-shadow:inset 0 0 40px rgba(0,0,0,0.5),0 0 20px rgba(0,0,0,0.3);"></div>' +
+          '</div>' +
+          '<div class="mg-feedback" id="gear-feedback" style="margin-top:0.5rem;min-height:2em;text-shadow:0 1px 4px rgba(0,0,0,0.8);"></div>' +
+        '</div>';
+
+      container.querySelector('#prec-quit2').addEventListener('pointerdown', function(e) {
+        e.preventDefault(); if (onDefeat) onDefeat();
+      });
+
+      var livesEl = container.querySelector('#gear-lives');
+      var feedbackEl = container.querySelector('#gear-feedback');
+      var area = container.querySelector('#gear-area');
+      var infoEl = container.querySelector('#gear-info');
+      livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+
+      function drawGearImg(parent, x, y, sz, opacity) {
+        var el = document.createElement('div');
+        el.style.cssText = 'position:absolute;left:' + (x - sz / 2) + 'px;top:' + (y - sz / 2) + 'px;width:' + sz + 'px;height:' + sz + 'px;' +
+          'background:url(assets/scenes/engranaje.png) center/contain no-repeat;opacity:' + opacity + ';' +
+          'display:flex;align-items:center;justify-content:center;text-align:center;';
+        parent.appendChild(el);
+        return el;
+      }
+
+      // Draw slots
+      function makeSlotBg(parent, x, y, sz) {
+        var bg = document.createElement('div');
+        bg.style.cssText = 'position:absolute;left:' + (x - sz / 2 - 4) + 'px;top:' + (y - sz / 2 - 4) + 'px;width:' + (sz + 8) + 'px;height:' + (sz + 8) + 'px;' +
+          'border-radius:50%;background:rgba(10,10,30,0.6);pointer-events:none;';
+        parent.appendChild(bg);
+      }
+      if (rd.mode === 'size') {
+        slots.forEach(function(s) {
+          var sz = s.size * 2;
+          makeSlotBg(area, s.x, s.y, sz);
+          var slotEl = drawGearImg(area, s.x, s.y, sz, 0.4);
+          slotEl.style.border = '3px dashed rgba(110,196,110,0.8)';
+          slotEl.style.borderRadius = '50%';
+          slotEl.style.boxShadow = '0 0 8px rgba(110,196,110,0.4)';
+          slotEl.dataset.slotId = s.id;
+        });
+      } else {
+        slots.forEach(function(s) {
+          var sz = 50;
+          makeSlotBg(area, s.x, s.y, sz);
+          var slotEl = drawGearImg(area, s.x, s.y, sz, 0.4);
+          slotEl.style.border = '3px dashed rgba(232,201,160,0.8)';
+          slotEl.style.borderRadius = '50%';
+          slotEl.style.boxShadow = '0 0 8px rgba(232,201,160,0.3)';
+          slotEl.dataset.slotId = s.id;
+          var lbl = document.createElement('div');
+          var lblW = 130;
+          lbl.style.cssText = 'position:absolute;left:' + (s.x - lblW / 2) + 'px;top:' + (s.y + sz / 2 + 5) + 'px;width:' + lblW + 'px;' +
+            'font-family:Fredoka,sans-serif;font-size:clamp(0.6rem,1.5vw,0.78rem);color:#fff8ef;text-align:center;line-height:1.2;pointer-events:none;' +
+            'background:rgba(10,10,30,0.8);border-radius:8px;padding:3px 6px;font-weight:500;';
+          lbl.textContent = s.clue;
+          area.appendChild(lbl);
+        });
+      }
+
+      // Draw draggable gears
+      var dragging = null;
+      var dragOffset = { x: 0, y: 0 };
+
+      gears.forEach(function(g) {
+        var sz = rd.mode === 'size' ? g.size * 2 : 50;
+        var el = drawGearImg(area, g.x, g.y, sz, 1);
+        el.style.cursor = 'grab';
+        el.style.zIndex = '10';
+        el.style.touchAction = 'none';
+        el.style.pointerEvents = 'auto';
+        el.style.filter = 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))';
+        el.dataset.gearId = g.id;
+        var innerLabel = document.createElement('div');
+        innerLabel.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+          'font-family:Fredoka,sans-serif;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,0.9);pointer-events:none;';
+        if (rd.mode === 'size') {
+          innerLabel.style.fontSize = 'clamp(0.7rem,1.6vw,0.9rem)';
+          innerLabel.style.color = '#fff';
+          innerLabel.textContent = g.size;
+        } else {
+          innerLabel.style.fontSize = 'clamp(1.1rem,2.8vw,1.4rem)';
+          innerLabel.textContent = g.symbol;
+        }
+        el.appendChild(innerLabel);
+        g.el = el;
+        g.sz = sz;
+        g.origX = g.x;
+        g.origY = g.y;
+      });
+
+      area.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        var target = e.target;
+        while (target && target !== area && !(target.dataset && target.dataset.gearId)) target = target.parentElement;
+        var gId = target && target.dataset ? target.dataset.gearId : null;
+        if (gId === undefined || gId === null) return;
+        var gear = gears.find(function(gg) { return String(gg.id) === String(gId) && !gg.placed; });
+        if (!gear) return;
+        var rect = area.getBoundingClientRect();
+        dragging = gear;
+        var half = gear.sz / 2;
+        dragOffset.x = e.clientX - rect.left - (parseFloat(gear.el.style.left) + half);
+        dragOffset.y = e.clientY - rect.top - (parseFloat(gear.el.style.top) + half);
+        gear.el.style.zIndex = '20';
+        gear.el.style.transform = 'scale(1.12)';
+        if (rd.mode === 'match' && gear.symbol) {
+          infoEl.textContent = gear.symbol + ' = ' + gear.gearName;
+          infoEl.style.opacity = '1';
+        }
+      });
+
+      area.addEventListener('pointermove', function(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        var rect = area.getBoundingClientRect();
+        var half = dragging.sz / 2;
+        var nx = e.clientX - rect.left - dragOffset.x;
+        var ny = e.clientY - rect.top - dragOffset.y;
+        dragging.el.style.left = (nx - half) + 'px';
+        dragging.el.style.top = (ny - half) + 'px';
+      });
+
+      area.addEventListener('pointerup', function(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        var gear = dragging;
+        dragging = null;
+        gear.el.style.zIndex = '10';
+        gear.el.style.transform = '';
+        if (rd.mode === 'match') infoEl.style.opacity = '0';
+        var half = gear.sz / 2;
+        var gx = parseFloat(gear.el.style.left) + half;
+        var gy = parseFloat(gear.el.style.top) + half;
+
+        var closestSlot = null;
+        var closestDist = 999;
+        var snapDist = 40;
+        slots.forEach(function(s) {
+          if (s.filled) return;
+          var dx = gx - s.x, dy = gy - s.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d < snapDist && d < closestDist) {
+            closestSlot = s;
+            closestDist = d;
+          }
+        });
+
+        if (closestSlot) {
+          var isCorrect = gear.id === closestSlot.id;
+
+          if (isCorrect) {
+            closestSlot.filled = true;
+            gear.placed = true;
+            var slotSz = rd.mode === 'size' ? closestSlot.size * 2 : 50;
+            gear.el.style.left = (closestSlot.x - slotSz / 2) + 'px';
+            gear.el.style.top = (closestSlot.y - slotSz / 2) + 'px';
+            gear.el.style.pointerEvents = 'none';
+            gear.el.style.opacity = '1';
+            gear.el.style.transition = 'transform 0.3s';
+            gear.el.style.transform = 'scale(1.1)';
+            setTimeout(function() { gear.el.style.transform = ''; }, 300);
+            placed++;
+            feedbackEl.textContent = closestSlot.fact;
+            feedbackEl.className = 'mg-feedback success';
+
+            if (placed >= gearCount) {
+              roundIdx++;
+              if (roundIdx >= ROUNDS.length) {
+                feedbackEl.textContent = '¡Mecanismo reparado! El reloj funciona.';
+                setTimeout(function() { phase1(); }, 1500);
+              } else {
+                feedbackEl.textContent = '¡Ronda superada!';
+                setTimeout(function() { showRoundIntro(startLevel); }, 1200);
+              }
+            }
+          } else {
+            lives--;
+            livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+            feedbackEl.textContent = rd.mode === 'size' ? 'Ese tamaño no encaja ahí…' : 'Esa pieza no corresponde a esa pista…';
+            feedbackEl.className = 'mg-feedback error';
+            if (lives <= 0) {
+              showDefeatScreen();
+              return;
+            }
+            gear.el.style.transition = 'left 0.3s, top 0.3s';
+            gear.el.style.left = (gear.origX - half) + 'px';
+            gear.el.style.top = (gear.origY - half) + 'px';
+            setTimeout(function() { gear.el.style.transition = ''; }, 300);
+          }
+        } else {
+          gear.el.style.transition = 'left 0.3s, top 0.3s';
+          gear.el.style.left = (gear.origX - half) + 'px';
+          gear.el.style.top = (gear.origY - half) + 'px';
+          setTimeout(function() { gear.el.style.transition = ''; }, 300);
+        }
+      });
+    }
+
+    showInstructions2(function() { showRoundIntro(startLevel); });
+  }
+
+  // ===== INICIO =====
+  startPhase2();
+}
+
+function logicMinigame(container, onComplete, onDefeat) {
+  container.style.background = 'url(assets/scenes/reto3_bg.png) center/cover no-repeat';
+
+  var ALL_SPECIES = [
+    { id:'pandas', name:'Pandas', img:'assets/scenes/carta_pandas.png', fact:'1-2 crías por camada' },
+    { id:'zorros', name:'Zorros', img:'assets/scenes/carta_zorros.png', fact:'4-6 crías por camada' },
+    { id:'ardillas', name:'Ardillas', img:'assets/scenes/carta_ardillas.png', fact:'3-5 crías por camada' },
+    { id:'buhos', name:'Búhos', img:'assets/scenes/carta_buhos.png', fact:'2-4 huevos por nidada' },
+    { id:'osos', name:'Osos', img:'assets/scenes/carta_osos.png', fact:'1-3 crías por camada' },
+    { id:'ornitorrincos', name:'Ornitorrincos', img:'assets/scenes/carta_ornitorrincos.png', fact:'1-3 huevos por nidada' },
+    { id:'delfines', name:'Delfines', img:'assets/scenes/carta_delfines.png', fact:'1 cría por gestación' }
+  ];
+
+  var ROUNDS = [
+    { label:'Ronda 1 de 2', desc:'4 pares — 8 cartas', pairs:4, cols:4, maxErrors:6, time:30 },
+    { label:'Ronda 2 de 2', desc:'6 pares — 12 cartas', pairs:6, cols:4, maxErrors:8, time:60 }
+  ];
+  var roundIdx = 0;
+  var errors = 0;
+  var maxErrors = 0;
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function showInstructions(cb) {
+    container.innerHTML =
+      '<div class="mg-wrapper" style="text-align:center;">' +
+        '<div class="mg-title">Archivo de Familias</div>' +
+        '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;margin:1rem 0 1.5rem;max-width:400px;">' +
+          'Encuentra los pares de cartas iguales.<br>' +
+          'Toca una carta para voltearla.<br>' +
+          'Si dos cartas coinciden, se quedan abiertas<br>y descubres un dato de esa especie.<br>' +
+          '¡Cuidado! Demasiados errores y pierdes.' +
+        '</div>' +
+        '<button class="mg-btn" id="mem-go">¡Empezar!</button>' +
+      '</div>';
+    container.querySelector('#mem-go').addEventListener('pointerdown', function(e) {
+      e.preventDefault(); cb();
+    });
+  }
+
+  function showRoundIntro(cb) {
+    var rd = ROUNDS[roundIdx];
+    container.innerHTML =
+      '<div class="mg-wrapper" style="text-align:center;">' +
+        '<div class="mg-title">Archivo de Familias</div>' +
+        '<div class="mg-subtitle">' + rd.label + '</div>' +
+        '<div style="font-size:clamp(0.85rem,2vw,1.05rem);color:#fff8ef;line-height:1.8;margin:1rem 0 1.5rem;max-width:400px;">' +
+          rd.desc + '<br>Máximo ' + rd.maxErrors + ' errores permitidos<br>Tiempo: ' + rd.time + ' segundos' +
+        '</div>' +
+        '<button class="mg-btn" id="mem-start">¡Listo!</button>' +
+      '</div>';
+    container.querySelector('#mem-start').addEventListener('pointerdown', function(e) {
+      e.preventDefault(); cb();
+    });
+  }
+
+  function startRound() {
+    var rd = ROUNDS[roundIdx];
+    var pairCount = rd.pairs;
+    maxErrors = rd.maxErrors;
+    errors = 0;
+
+    var species = shuffle(ALL_SPECIES.slice()).slice(0, pairCount);
+    var cards = [];
+    species.forEach(function(sp) {
+      cards.push({ species: sp, matched: false, flipped: false });
+      cards.push({ species: sp, matched: false, flipped: false });
+    });
+    shuffle(cards);
+
+    var cols = rd.cols;
+    var rows = Math.ceil(cards.length / cols);
+    var cardW = Math.min(95, Math.floor((window.innerWidth * 0.92 - (cols - 1) * 8) / cols));
+    var cardH = Math.round(cardW * 1.35);
+
+    var flippedCards = [];
+    var locked = false;
+    var matched = 0;
+    var timeLeft = rd.time;
+    var timerInterval = null;
+    var roundOver = false;
+
+    container.innerHTML =
+      '<div class="mg-wrapper">' +
+        '<div style="background:rgba(10,10,30,0.7);border-radius:18px;padding:1rem 0.8rem;max-width:420px;width:95%;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:0.3rem;">' +
+          '<button class="menu-back-btn" id="mem-quit" style="margin:0;padding:0.4rem 1rem;font-size:clamp(0.7rem,1.6vw,0.85rem);">Salir</button>' +
+          '<div class="mg-title" style="margin:0;">Archivo de Familias</div>' +
+          '<div style="width:60px;"></div>' +
+        '</div>' +
+        '<div class="mg-subtitle">' + rd.label + '</div>' +
+        '<div id="mem-timer" style="font-size:clamp(1rem,2.5vw,1.3rem);font-weight:700;color:#ffda6b;text-align:center;margin-bottom:0.3rem;text-shadow:0 2px 6px rgba(0,0,0,0.5);"></div>' +
+        '<div id="mem-status" style="font-size:clamp(0.75rem,1.8vw,0.9rem);color:#e8c9a0;margin-bottom:0.5rem;text-align:center;"></div>' +
+        '<div id="mem-grid" style="display:grid;grid-template-columns:repeat(' + cols + ',' + cardW + 'px);gap:8px;justify-content:center;"></div>' +
+        '<div class="mg-feedback" id="mem-feedback" style="margin-top:0.8rem;min-height:2.5em;"></div>' +
+        '</div>' +
+      '</div>';
+
+    container.querySelector('#mem-quit').addEventListener('pointerdown', function(e) {
+      e.preventDefault(); clearInterval(timerInterval); if (onDefeat) onDefeat();
+    });
+
+    var grid = container.querySelector('#mem-grid');
+    var statusEl = container.querySelector('#mem-status');
+    var feedbackEl = container.querySelector('#mem-feedback');
+    var timerEl = container.querySelector('#mem-timer');
+
+    function updateTimer() {
+      var m = Math.floor(timeLeft / 60);
+      var s = timeLeft % 60;
+      timerEl.textContent = (m > 0 ? m + ':' + (s < 10 ? '0' : '') + s : s + 's');
+      timerEl.style.color = timeLeft <= 10 ? '#e85d5d' : '#ffda6b';
+    }
+
+    function startTimer() {
+      updateTimer();
+      timerInterval = setInterval(function() {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          roundOver = true;
+          locked = true;
+          container.innerHTML =
+            '<div class="mg-wrapper" style="text-align:center;">' +
+              '<div class="mg-title" style="color:#e85d5d;">IMPOSIBOLLL</div>' +
+              '<div style="font-size:clamp(0.9rem,2vw,1.1rem);color:#fff8ef;margin:1rem 0;">Se acabó el tiempo…</div>' +
+              '<button class="mg-btn" id="mem-retry">Reintentar</button>' +
+            '</div>';
+          container.querySelector('#mem-retry').addEventListener('pointerdown', function(ev) {
+            ev.preventDefault(); if (onDefeat) onDefeat();
+          });
+        }
+      }, 1000);
+    }
+
+    function updateStatus() {
+      statusEl.textContent = 'Parejas: ' + matched + '/' + pairCount + '  |  Errores: ' + errors + '/' + maxErrors;
+    }
+
+    function renderCards() {
+      grid.innerHTML = '';
+      cards.forEach(function(card, idx) {
+        var el = document.createElement('div');
+        el.style.cssText = 'width:' + cardW + 'px;height:' + cardH + 'px;border-radius:10px;cursor:pointer;' +
+          'transition:transform 0.3s;position:relative;overflow:hidden;';
+
+        if (card.matched || card.flipped) {
+          el.style.background = 'none';
+          el.style.border = card.matched ? '3px solid #6ec46e' : '3px solid #ffda6b';
+          el.style.boxShadow = card.matched ? '0 0 10px rgba(110,196,110,0.4)' : '0 0 8px rgba(255,218,107,0.3)';
+          var img = document.createElement('img');
+          img.src = card.species.img;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:7px;pointer-events:none;';
+          el.appendChild(img);
+          if (card.matched) {
+            el.style.opacity = '0.85';
+          }
+        } else {
+          el.style.background = 'linear-gradient(135deg,#2d1b0e 0%,#4a2c17 50%,#2d1b0e 100%)';
+          el.style.border = '3px solid #c4956a';
+          el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+          var q = document.createElement('div');
+          q.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+            'font-family:Fredoka,sans-serif;font-size:clamp(1.5rem,4vw,2rem);color:#c4956a;font-weight:700;';
+          q.textContent = '?';
+          el.appendChild(q);
+        }
+
+        el.dataset.idx = idx;
+        if (!card.matched && !card.flipped && !locked) {
+          el.addEventListener('pointerdown', function(e) {
+            e.preventDefault();
+            if (locked || card.flipped || card.matched || roundOver) return;
+            card.flipped = true;
+            flippedCards.push(idx);
+            renderCards();
+
+            if (flippedCards.length === 2) {
+              locked = true;
+              var c1 = cards[flippedCards[0]];
+              var c2 = cards[flippedCards[1]];
+              if (c1.species.id === c2.species.id) {
+                setTimeout(function() {
+                  c1.matched = true;
+                  c2.matched = true;
+                  matched++;
+                  feedbackEl.innerHTML = '<span style="color:#6ec46e;font-weight:600;">' + c1.species.name + '</span>: ' + c1.species.fact;
+                  feedbackEl.className = 'mg-feedback success';
+                  updateStatus();
+                  flippedCards = [];
+                  locked = false;
+                  renderCards();
+                  if (matched >= pairCount) {
+                    clearInterval(timerInterval);
+                    roundOver = true;
+                    setTimeout(function() {
+                      roundIdx++;
+                      if (roundIdx >= ROUNDS.length) {
+                        feedbackEl.textContent = '¡Archivo completo! Todas las familias descubiertas.';
+                        setTimeout(function() { onComplete(); }, 1500);
+                      } else {
+                        feedbackEl.textContent = '¡Ronda superada!';
+                        setTimeout(function() { showRoundIntro(startRound); }, 1200);
+                      }
+                    }, 600);
+                  }
+                }, 500);
+              } else {
+                setTimeout(function() {
+                  c1.flipped = false;
+                  c2.flipped = false;
+                  errors++;
+                  feedbackEl.textContent = 'No coinciden…';
+                  feedbackEl.className = 'mg-feedback error';
+                  updateStatus();
+                  flippedCards = [];
+                  locked = false;
+                  renderCards();
+                  if (errors >= maxErrors) {
+                    clearInterval(timerInterval);
+                    roundOver = true;
+                    setTimeout(function() {
+                      container.innerHTML =
+                        '<div class="mg-wrapper" style="text-align:center;">' +
+                          '<div class="mg-title" style="color:#e85d5d;">IMPOSIBOLLL</div>' +
+                          '<div style="font-size:clamp(0.9rem,2vw,1.1rem);color:#fff8ef;margin:1rem 0;">Demasiados errores…</div>' +
+                          '<button class="mg-btn" id="mem-retry">Reintentar</button>' +
+                        '</div>';
+                      container.querySelector('#mem-retry').addEventListener('pointerdown', function(ev) {
+                        ev.preventDefault(); if (onDefeat) onDefeat();
+                      });
+                    }, 500);
+                  }
+                }, 800);
+              }
+            }
+          });
+        }
+        grid.appendChild(el);
+      });
+    }
+
+    updateStatus();
+    renderCards();
+    startTimer();
+  }
+
+  showInstructions(function() { showRoundIntro(startRound); });
+}
+
+function codeMinigame(container, onComplete, onDefeat) {
+  var digits = [0, 0, 0];
+
+  container.innerHTML =
+    '<div class="mg-wrapper">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:0.3rem;">' +
+        '<button class="menu-back-btn" id="code-quit" style="margin:0;padding:0.4rem 1rem;font-size:clamp(0.7rem,1.6vw,0.85rem);">Salir</button>' +
+        '<div class="mg-title" style="margin:0;">El Código Secreto</div>' +
+        '<div style="width:60px;"></div>' +
+      '</div>' +
+      '<div class="mg-subtitle">Recuerda los números que encontraste en cada pista</div>' +
+      '<div style="display:flex;gap:1.2rem;margin:2rem 0;" id="code-dials"></div>' +
+      '<div class="mg-feedback" id="code-feedback"></div>' +
+      '<button class="mg-btn" id="code-submit">Abrir</button>' +
+    '</div>';
+
+  container.querySelector('#code-quit').addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    if (onDefeat) onDefeat();
+  });
+
+  var dialsEl = container.querySelector('#code-dials');
+  var feedbackEl = container.querySelector('#code-feedback');
+  var submitBtn = container.querySelector('#code-submit');
+
+  function renderDials() {
+    dialsEl.innerHTML = digits.map(function(d, i) {
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">' +
+        '<button class="mg-btn secondary dial-up" data-idx="' + i + '" style="padding:0.5rem 1.2rem;font-size:1.3rem;">▲</button>' +
+        '<div style="width:65px;height:75px;background:#2d1b0e;border:3px solid #c4956a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:#ffda6b;">' + d + '</div>' +
+        '<button class="mg-btn secondary dial-down" data-idx="' + i + '" style="padding:0.5rem 1.2rem;font-size:1.3rem;">▼</button></div>';
+    }).join('');
+
+    dialsEl.querySelectorAll('.dial-up').forEach(function(btn) {
+      btn.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        digits[parseInt(btn.dataset.idx)] = (digits[parseInt(btn.dataset.idx)] + 1) % 10;
+        renderDials();
+      });
+    });
+    dialsEl.querySelectorAll('.dial-down').forEach(function(btn) {
+      btn.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        digits[parseInt(btn.dataset.idx)] = (digits[parseInt(btn.dataset.idx)] + 9) % 10;
+        renderDials();
+      });
+    });
+  }
+
+  submitBtn.onclick = function() {
+    var code = digits.join('');
+    if (code === '018') {
+      feedbackEl.textContent = '¡El candado se abre!';
+      feedbackEl.className = 'mg-feedback success';
+      submitBtn.textContent = 'Continuar';
+      submitBtn.onclick = function() { onComplete(); };
+    } else {
+      feedbackEl.textContent = 'No abre. El misterio sigue resistiéndose.';
+      feedbackEl.className = 'mg-feedback error';
+    }
+  };
+
+  renderDials();
+}
+
+// ═══════════════════════════════════════════
+// GAME ENGINE
+// ═══════════════════════════════════════════
+var dialogue = new DialogueEngine();
+var titleScreen = document.getElementById('title-screen');
+var sceneScreen = document.getElementById('scene-screen');
+var minigameScreen = document.getElementById('minigame-screen');
+var minigameContainer = document.getElementById('minigame-container');
+var sceneSelectScreen = document.getElementById('scene-select-screen');
+var gamesSelectScreen = document.getElementById('games-select-screen');
+var sceneBg = document.getElementById('scene-background');
+var sceneTitleOverlay = document.getElementById('scene-title-overlay');
+var sceneTitleText = document.getElementById('scene-title-text');
+var sceneTitleSub = document.getElementById('scene-title-sub');
+var transitionOverlay = document.getElementById('transition-overlay');
+
+var allScreens = [titleScreen, sceneScreen, minigameScreen, sceneSelectScreen, gamesSelectScreen];
+var isPracticeMode = false;
+
+function showScreen(screen) {
+  allScreens.forEach(function(s) { s.classList.remove('active'); });
+  screen.classList.add('active');
+}
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+async function transition(callback) {
+  transitionOverlay.classList.add('active');
+  await sleep(500);
+  await callback();
+  await sleep(100);
+  transitionOverlay.classList.remove('active');
+}
+
+async function showSceneTitle(title, subtitle) {
+  if (!title) return;
+  sceneTitleText.textContent = title;
+  sceneTitleSub.textContent = subtitle || '';
+  sceneTitleOverlay.classList.remove('hidden');
+
+  return new Promise(function(resolve) {
+    var dismissed = false;
+    function dismiss() {
+      if (dismissed) return;
+      dismissed = true;
+      sceneTitleOverlay.classList.add('hidden');
+      sceneTitleOverlay.removeEventListener('pointerdown', dismiss);
+      resolve();
+    }
+    setTimeout(function() { sceneTitleOverlay.addEventListener('pointerdown', dismiss); }, 600);
+    setTimeout(dismiss, 3000);
+  });
+}
+
+function loadScene(sceneId) {
+  var scene = SCENES[sceneId];
+  if (!scene) { showEnding(); return; }
+
+  transition(async function() {
+    showScreen(sceneScreen);
+    sceneBg.style.backgroundImage = "url('" + scene.background + "')";
+
+    if (scene.title) {
+      await showSceneTitle(scene.title, scene.subtitle);
+    }
+
+    dialogue.loadDialogues(scene.dialogues, function() {
+      var next = scene.next;
+      if (next && next.indexOf('minigame_') === 0) {
+        launchMinigame(next, sceneId);
+      } else if (next === 'ending') {
+        showEnding();
+      } else {
+        loadScene(next);
+      }
+    });
+  });
+}
+
+function launchMinigame(minigameId, fromScene) {
+  isPracticeMode = false;
+  transition(function() {
+    showScreen(minigameScreen);
+    minigameContainer.innerHTML = '';
+    var afterScene = fromScene.replace('_intro', '_end');
+    var onComplete = function() { loadScene(afterScene); };
+    var onDefeat = function() { loadScene(fromScene); };
+
+    runMinigame(minigameId, minigameContainer, onComplete, onDefeat);
+  });
+}
+
+function runMinigame(minigameId, ct, onComplete, onDefeat) {
+  switch (minigameId) {
+    case 'minigame_calendar': calendarMinigame(ct, onComplete, onDefeat); break;
+    case 'minigame_precision': precisionMinigame(ct, onComplete, onDefeat); break;
+    case 'minigame_logic': logicMinigame(ct, onComplete, onDefeat); break;
+    case 'minigame_code': codeMinigame(ct, onComplete, onDefeat); break;
+  }
+}
+
+function showEnding() {
+  transition(function() {
+    showScreen(sceneScreen);
+    sceneBg.style.backgroundImage = "url('assets/scenes/escena11.png')";
+    var endDialogues = [
+      { type: 'narrator', text: 'Nennis resolvió el misterio de los pupitres vacíos.' },
+      { type: 'narrator', text: 'Los pandas son una edición limitada, y eso los hace especiales.' },
+      { type: 'narrator', text: '¿Pero qué pasó con el bambú perdido? Eso… es otro caso.' },
+      { type: 'narrator', text: '🐾 Fin 🐾' },
+    ];
+    dialogue.loadDialogues(endDialogues, function() {
+      transition(function() { showScreen(titleScreen); });
+    });
+  });
+}
+
+// Input
+sceneScreen.addEventListener('pointerdown', function(e) {
+  if (e.target.closest('button') || e.target.closest('select')) return;
+  if (!sceneScreen.classList.contains('active')) return;
+  e.preventDefault();
+  dialogue.advance();
+});
+
+document.getElementById('btn-start').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  loadScene('scene1');
+});
+
+document.getElementById('btn-back').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dialogue.goBack();
+});
+
+// ═══════════════════════════════════════════
+// SCENE SELECT & REPLAY GAMES MENUS
+// ═══════════════════════════════════════════
+var SCENE_LIST = [
+  { id: 'scene1', num: 1, title: 'El salón de clases', sub: 'El primer misterio', img: 'assets/scenes/escena1_a.png' },
+  { id: 'scene2', num: 2, title: 'La oficina de Nennis', sub: 'Las teorías', img: 'assets/scenes/escena2.png' },
+  { id: 'scene3', num: 3, title: 'El pasillo de los retratos', sub: 'Pistas en los cuadros', img: 'assets/scenes/escena3_a.png' },
+  { id: 'scene4_intro', num: 4, title: 'El Archivo de los Ciclos', sub: 'Minijuego: Calendario', img: 'assets/scenes/escena4.png' },
+  { id: 'scene5', num: 5, title: 'El Jardín de los Relojes', sub: 'La cerradura', img: 'assets/scenes/escena5.png' },
+  { id: 'scene6_intro', num: 6, title: 'El Invernadero del Tiempo', sub: 'Minijuego: Precisión', img: 'assets/scenes/escena6.png' },
+  { id: 'scene7', num: 7, title: 'El comedor de la escuela', sub: 'Bambú y fotografías', img: 'assets/scenes/escena7_a.png' },
+  { id: 'scene8_intro', num: 8, title: 'El Archivo de las Familias', sub: 'Minijuego: Memoria', img: 'assets/scenes/escena8_a.png' },
+  { id: 'scene9', num: 9, title: 'La carrera de regreso', sub: 'Conectando las pistas', img: 'assets/scenes/escena9_a.png' },
+  { id: 'scene10', num: 10, title: 'La resolución', sub: 'Frente al tablero', img: 'assets/scenes/escena10_a.png' },
+  { id: 'scene11_intro', num: 11, title: 'El código secreto', sub: 'Minijuego: Candado', img: 'assets/scenes/escena11.png' },
+  { id: 'scene12', num: 12, title: 'Despedida de Nennis', sub: '¡Coyeye coyeye!', img: 'assets/scenes/escena12.png' },
+];
+
+var GAME_LIST = [
+  { id: 'minigame_calendar', from: 'scene4_intro', icon: '📅', title: 'Reconstruye el Calendario', sub: 'Atrapa los meses en orden' },
+  { id: 'minigame_precision', from: 'scene6_intro', icon: '⏱️', title: 'La Ventana del Tiempo', sub: 'Detén la aguja en la zona verde' },
+  { id: 'minigame_logic', from: 'scene8_intro', icon: '🧩', title: 'Archivo de las Familias', sub: 'Conecta cada especie con su camada' },
+];
+
+(function buildSceneSelect() {
+  var grid = document.getElementById('scene-select-grid');
+  var prevBtn = document.getElementById('scene-page-prev');
+  var nextBtn = document.getElementById('scene-page-next');
+  var label = document.getElementById('scene-page-label');
+  var perPage = 3;
+  var currentPage = 0;
+  var totalPages = Math.ceil(SCENE_LIST.length / perPage);
+
+  function renderPage() {
+    grid.innerHTML = '';
+    var start = currentPage * perPage;
+    var end = Math.min(start + perPage, SCENE_LIST.length);
+    for (var i = start; i < end; i++) {
+      var s = SCENE_LIST[i];
+      var card = document.createElement('div');
+      card.className = 'menu-card';
+      card.innerHTML =
+        '<div class="scene-card-thumb" style="background-image:url(\'' + s.img + '\');">' +
+          '<div class="scene-card-badge">' + s.num + '</div>' +
+        '</div>' +
+        '<div class="scene-card-body">' +
+          '<div class="menu-card-title">' + s.title + '</div>' +
+          '<div class="menu-card-sub">' + s.sub + '</div>' +
+        '</div>';
+      card.addEventListener('pointerdown', (function(id) {
+        return function(e) { e.preventDefault(); loadScene(id); };
+      })(s.id));
+      grid.appendChild(card);
+    }
+    label.textContent = (currentPage + 1) + ' / ' + totalPages;
+    prevBtn.disabled = currentPage === 0;
+    nextBtn.disabled = currentPage >= totalPages - 1;
+  }
+
+  prevBtn.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    if (currentPage > 0) { currentPage--; renderPage(); }
+  });
+  nextBtn.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    if (currentPage < totalPages - 1) { currentPage++; renderPage(); }
+  });
+
+  renderPage();
+})();
+
+(function buildGamesSelect() {
+  var grid = document.getElementById('games-select-grid');
+  GAME_LIST.forEach(function(g) {
+    var card = document.createElement('div');
+    card.className = 'menu-card menu-card-game';
+    card.innerHTML = '<div class="menu-card-num">' + g.icon + '</div>' +
+      '<div class="menu-card-info"><div class="menu-card-title">' + g.title + '</div>' +
+      '<div class="menu-card-sub">' + g.sub + '</div></div>';
+    card.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      launchMinigameStandalone(g.id);
+    });
+    grid.appendChild(card);
+  });
+})();
+
+function launchMinigameStandalone(minigameId) {
+  isPracticeMode = true;
+  transition(function() {
+    showScreen(minigameScreen);
+    minigameContainer.innerHTML = '';
+    var backToMenu = function() {
+      transition(function() { showScreen(gamesSelectScreen); });
+    };
+    runMinigame(minigameId, minigameContainer, backToMenu, backToMenu);
+  });
+}
+
+document.getElementById('btn-home').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  transition(function() { showScreen(titleScreen); });
+});
+
+document.getElementById('btn-scenes').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  showScreen(sceneSelectScreen);
+});
+
+document.getElementById('btn-games').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  showScreen(gamesSelectScreen);
+});
+
+document.getElementById('scene-select-back').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  showScreen(titleScreen);
+});
+
+document.getElementById('games-select-back').addEventListener('pointerdown', function(e) {
+  e.preventDefault();
+  showScreen(titleScreen);
+});
+
+// Prevent double-tap zoom on mobile
+var lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  var now = Date.now();
+  if (now - lastTouchEnd < 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+</script>
+</body>
+</html>
