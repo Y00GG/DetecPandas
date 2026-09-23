@@ -1582,9 +1582,9 @@ function precisionMinigame(container, onComplete, onDefeat) {
   function startPhase2() {
     // --- VARIANTES ALEATORIAS POR RONDA ---
     var SIZE_VARIANTS = [
-      { sizes:[16,24,34,44], facts:['Una temporada al año','Solo unos pocos días','La ventana es muy corta','El timing lo es todo'] },
-      { sizes:[20,28,36,48], facts:['El reloj no espera','Cada segundo cuenta','La precisión importa','El mecanismo es frágil'] },
-      { sizes:[14,22,32,42], facts:['La paciencia es clave','Nada se puede forzar','Todo a su tiempo','La naturaleza decide'] }
+      { sizes:[14,20,26,34,42,50], facts:['Una temporada al año','Solo unos pocos días','La ventana es muy corta','El timing lo es todo','Cada momento importa','La naturaleza no espera'] },
+      { sizes:[16,22,28,36,44,52], facts:['El reloj no espera','Cada segundo cuenta','La precisión importa','El mecanismo es frágil','Todo está conectado','Un engranaje mueve otro'] },
+      { sizes:[12,18,26,34,40,48], facts:['La paciencia es clave','Nada se puede forzar','Todo a su tiempo','La naturaleza decide','El ritmo es perfecto','Nada sobra ni falta'] }
     ];
     var MATCH_VARIANTS_R2 = [
       {
@@ -1655,7 +1655,7 @@ function precisionMinigame(container, onComplete, onDefeat) {
       var mv2 = pickRandom(MATCH_VARIANTS_R2);
       var mv3 = pickRandom(MATCH_VARIANTS_R3);
       return [
-        { mode:'size', label:'Ronda 1 de 3 — Tamaños', desc:'Cada hueco tiene un tamaño distinto.<br>Arrastra el engranaje correcto a cada uno.', count:4, sizes:sv.sizes, facts:sv.facts },
+        { mode:'size', label:'Ronda 1 de 3 — Tamaños', desc:'Cada hueco tiene un tamaño distinto.<br>Arrastra el engranaje correcto a cada uno.', count:6, sizes:sv.sizes, facts:sv.facts },
         { mode:'match', label:'Ronda 2 de 3 — Acertijos', desc:'Cada hueco tiene una pista.<br>Toca un engranaje para ver qué es.<br>Arrastra el correcto a su lugar.', count:4, gearData:mv2.gearData, slotClues:mv2.slotClues },
         { mode:'match', label:'Ronda 3 de 3 — Ciclo', desc:'Las pistas son más difíciles.<br>Toca cada engranaje para identificarlo.<br>Piensa bien antes de colocar.', count:5, gearData:mv3.gearData, slotClues:mv3.slotClues }
       ];
@@ -1718,9 +1718,10 @@ function precisionMinigame(container, onComplete, onDefeat) {
       var gears = [];
       var placed = 0;
 
+      var randomOffset = Math.random() * 360;
       if (rd.mode === 'size') {
         for (var i = 0; i < gearCount; i++) {
-          var ang = (-90 + i * (360 / gearCount)) * Math.PI / 180;
+          var ang = (randomOffset + i * (360 / gearCount)) * Math.PI / 180;
           var sx = cx + Math.cos(ang) * slotRadius;
           var sy = cy + Math.sin(ang) * slotRadius;
           slots.push({ x: sx, y: sy, size: rd.sizes[i], fact: rd.facts[i], filled: false, id: i });
@@ -1728,7 +1729,7 @@ function precisionMinigame(container, onComplete, onDefeat) {
       } else {
         var gd = rd.gearData;
         for (var i2 = 0; i2 < gearCount; i2++) {
-          var ang2 = (-90 + i2 * (360 / gearCount)) * Math.PI / 180;
+          var ang2 = (randomOffset + i2 * (360 / gearCount)) * Math.PI / 180;
           var sx2 = cx + Math.cos(ang2) * slotRadius;
           var sy2 = cy + Math.sin(ang2) * slotRadius;
           slots.push({ x: sx2, y: sy2, clue: rd.slotClues[i2], fact: gd[i2].fact, filled: false, id: i2 });
