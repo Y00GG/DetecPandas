@@ -848,20 +848,6 @@ const SCENES = {
       { speaker: 'PROFESORA BÚHO', text: '¿Sí?' },
       { speaker: 'NENNIS', text: 'Creo que tenemos un nuevo caso.' },
     ],
-    next: 'scene12',
-  },
-  scene12: {
-    id: 'scene12', title: null,
-    background: 'assets/scenes/escena12.png',
-    dialogues: [
-      { speaker: 'NENNIS', text: '¡Oye, oye! ¡Antes de que te vayas!' },
-      { speaker: 'NENNIS', text: '¡Muchas gracias por ayudarme con este caso! No lo habría resuelto sin ti.' },
-      { speaker: 'NENNIS', text: 'Pronto recibirás tu insignia oficial como Detective Pandita. ¡Te la mereces!' },
-      { speaker: 'NENNIS', text: 'Pero no te relajes demasiado…' },
-      { speaker: 'NENNIS', text: '¡Aún te queda resolver el misterio de la llave que está en tu maleta!' },
-      { speaker: 'NENNIS', text: '¡Buena suerte! Y recuerda: si necesitas ayuda, ya sabes dónde encontrarme.' },
-      { speaker: 'NENNIS', text: '¡Coyeye coyeye! ¡AIOS!!!' },
-    ],
     next: 'ending',
   },
 };
@@ -2411,9 +2397,28 @@ function showEnding() {
       { type: 'narrator', text: 'Nennis resolvió el misterio de los pupitres vacíos.' },
       { type: 'narrator', text: 'Los pandas son una edición limitada, y eso los hace especiales.' },
       { type: 'narrator', text: '¿Pero qué pasó con el bambú perdido? Eso… es otro caso.' },
-      { type: 'narrator', text: '🐾 Fin 🐾' },
+      { type: 'narrator', text: '🐾 Continuará... 🐾' },
     ];
     dialogue.loadDialogues(endDialogues, function() {
+      showFarewell();
+    });
+  });
+}
+
+function showFarewell() {
+  transition(function() {
+    showScreen(sceneScreen);
+    sceneBg.style.backgroundImage = "url('assets/scenes/escena12.png')";
+    var farewellDialogues = [
+      { speaker: 'NENNIS', text: '¡Oye, oye! ¡Antes de que te vayas!' },
+      { speaker: 'NENNIS', text: '¡Muchas gracias por ayudarme con este caso! No lo habría resuelto sin ti.' },
+      { speaker: 'NENNIS', text: 'Pronto recibirás tu insignia oficial como Detective Pandita. ¡Te la mereces!' },
+      { speaker: 'NENNIS', text: 'Pero no te relajes demasiado…' },
+      { speaker: 'NENNIS', text: '¡Aún te queda resolver el misterio de la llave que está en tu maleta!' },
+      { speaker: 'NENNIS', text: '¡Buena suerte! Y recuerda: si necesitas ayuda, ya sabes dónde encontrarme.' },
+      { speaker: 'NENNIS', text: '¡Coyeye coyeye! ¡AIOS!!!' },
+    ];
+    dialogue.loadDialogues(farewellDialogues, function() {
       transition(function() { showScreen(titleScreen); });
     });
   });
@@ -2453,7 +2458,6 @@ var SCENE_LIST = [
   { id: 'scene9', num: 9, title: 'La carrera de regreso', sub: 'Conectando las pistas', img: 'assets/scenes/escena9_a.png' },
   { id: 'scene10', num: 10, title: 'La resolución', sub: 'Frente al tablero', img: 'assets/scenes/escena10_a.png' },
   { id: 'scene11_intro', num: 11, title: 'El código secreto', sub: 'Minijuego: Candado', img: 'assets/scenes/escena11.png' },
-  { id: 'scene12', num: 12, title: 'Despedida de Nennis', sub: '¡Coyeye coyeye!', img: 'assets/scenes/escena12.png' },
 ];
 
 var GAME_LIST = [
